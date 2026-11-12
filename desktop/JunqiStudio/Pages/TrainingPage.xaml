@@ -1,0 +1,132 @@
+<UserControl x:Class="JunqiStudio.Pages.TrainingPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
+  <Grid Margin="32,32,32,0">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="290"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- 训练记录列表 -->
+    <DockPanel Margin="0,0,24,24">
+      <Grid DockPanel.Dock="Top" Margin="0,0,0,18">
+        <TextBlock Text="训练" Style="{StaticResource H1}"/>
+        <Button HorizontalAlignment="Right" Style="{StaticResource BtnPrimary}" Padding="14,8" Click="NewRun_Click">
+          <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="White"/><TextBlock Text="新建" Foreground="White"/></StackPanel>
+        </Button>
+      </Grid>
+      <TextBlock x:Name="EmptyText" DockPanel.Dock="Top" Style="{StaticResource Sub}" TextWrapping="Wrap" Visibility="Collapsed"
+                 Text="还没有训练记录。点“新建”开始第一次训练。"/>
+      <ListBox x:Name="RunList" BorderThickness="0" Background="Transparent" ItemContainerStyle="{StaticResource RunItem}"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="RunList_SelectionChanged">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <StackPanel>
+              <Grid>
+                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" TextTrimming="CharacterEllipsis" Margin="0,0,70,0"/>
+                <Border HorizontalAlignment="Right" CornerRadius="9" Padding="8,1" Background="{Binding StatusBg}">
+                  <TextBlock Text="{Binding Status}" FontSize="11.5" FontWeight="SemiBold" Foreground="{Binding StatusFg}"/>
+                </Border>
+              </Grid>
+              <TextBlock Text="{Binding Line2}" Style="{StaticResource Hint}" Margin="0,5,0,0"/>
+              <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="1" Height="5" Margin="0,8,0,0"/>
+              <TextBlock Text="{Binding Line3}" Style="{StaticResource Hint}" Margin="0,6,0,0"/>
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+
+    <!-- 详情 -->
+    <ScrollViewer x:Name="Detail" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel Margin="0,0,8,24">
+        <Grid Margin="0,0,0,18">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock x:Name="RunName" Style="{StaticResource H1}"/>
+              <Border x:Name="RunBadge" Style="{StaticResource Badge}"><TextBlock x:Name="RunBadgeText" Style="{StaticResource BadgeText}"/></Border>
+            </StackPanel>
+            <TextBlock x:Name="RunMeta" Style="{StaticResource Sub}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Grid>
+        <WrapPanel Margin="0,0,0,18">
+          <Button x:Name="StopBtn" Style="{StaticResource BtnDanger}" Margin="0,0,8,0" Click="Stop_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="{StaticResource Red}"/><TextBlock Text="停止训练" Foreground="{StaticResource Red}"/></StackPanel>
+          </Button>
+          <Button x:Name="ResumeBtn" Style="{StaticResource BtnPrimary}" Margin="0,0,8,0" Click="Resume_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="White"/><TextBlock Text="继续训练" Foreground="White"/></StackPanel>
+          </Button>
+          <Button x:Name="PlayBtn" Style="{StaticResource BtnSoft}" Margin="0,0,8,0" Click="Play_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="{StaticResource Primary}"/><TextBlock Text="用这个模型对弈" Foreground="{StaticResource Primary}"/></StackPanel>
+          </Button>
+          <Button Style="{StaticResource BtnOutline}" Margin="0,0,8,0" Click="Clone_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0"/><TextBlock Text="照此新建"/></StackPanel>
+          </Button>
+          <Button Style="{StaticResource BtnOutline}" Margin="0,0,8,0" Click="Folder_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0"/><TextBlock Text="打开目录"/></StackPanel>
+          </Button>
+        </WrapPanel>
+
+        <UniformGrid x:Name="Kpis" Rows="1" Margin="0,0,0,16"/>
+
+        <Border Style="{StaticResource CardBox}" Padding="16,14">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="270"/><RowDefinition Height="270"/></Grid.RowDefinitions>
+            <sp:WpfPlot x:Name="PlotLoss"/>
+            <sp:WpfPlot x:Name="PlotPolicy" Grid.Column="1"/>
+            <sp:WpfPlot x:Name="PlotBelief" Grid.Row="1"/>
+            <sp:WpfPlot x:Name="PlotValue" Grid.Row="1" Grid.Column="1"/>
+          </Grid>
+        </Border>
+
+        <Border x:Name="ResultCard" Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Text="对战评估" Style="{StaticResource H2}"/>
+            <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,12" FontSize="13" TextWrapping="Wrap" Text="训练结束后模型（贪心走法）对每种对手各下若干局。得分 = (胜 + 0.5×和) / 局数，0.5 表示五五开。"/>
+            <DataGrid x:Name="MatchGrid">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="对手" Binding="{Binding Opponent}" Width="2*"/>
+                <DataGridTextColumn Header="局数" Binding="{Binding Games}" Width="*"/>
+                <DataGridTextColumn Header="胜 / 负 / 和" Binding="{Binding Wld}" Width="1.4*"/>
+                <DataGridTextColumn Header="得分" Binding="{Binding Score}" Width="*"/>
+                <DataGridTextColumn Header="Elo 差" Binding="{Binding Elo}" Width="*"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel x:Name="BeliefSection">
+            <TextBlock Text="猜子（敌方暗子身份）" Style="{StaticResource H2}" Margin="0,24,0,0"/>
+            <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,12" FontSize="13" Text="规则推理（只用硬约束）与神经网络信念头在留出棋局上的对比；进度指对局进行到百分之几。"/>
+            <DataGrid x:Name="BeliefGrid">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="进度" Binding="{Binding Progress}" Width="0.7*"/>
+                <DataGridTextColumn Header="命中率 规则" Binding="{Binding BaseTop1}" Width="*"/>
+                <DataGridTextColumn Header="命中率 神经" Binding="{Binding NeuralTop1}" Width="*"/>
+                <DataGridTextColumn Header="NLL 规则" Binding="{Binding BaseNll}" Width="*"/>
+                <DataGridTextColumn Header="NLL 神经" Binding="{Binding NeuralNll}" Width="*"/>
+                <DataGridTextColumn Header="p(真司令)" Binding="{Binding Marshal}" Width="1.3*"/>
+                <DataGridTextColumn Header="p(真军旗)" Binding="{Binding Flag}" Width="1.3*"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <Grid Margin="0,0,0,12">
+              <TextBlock Text="训练输出" Style="{StaticResource H2}"/>
+              <Button HorizontalAlignment="Right" Style="{StaticResource BtnSmall}" Click="OpenLog_Click" Content="打开完整日志"/>
+            </Grid>
+            <TextBox x:Name="Console" Style="{StaticResource ConsoleBox}" Height="280"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <StackPanel x:Name="NoRun" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
+      <TextBlock Text="&#xE9D2;" FontFamily="Segoe MDL2 Assets" FontSize="48" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/>
+      <TextBlock Text="选择左侧的一次训练查看曲线" Style="{StaticResource Sub}" Margin="0,14,0,0"/>
+    </StackPanel>
+  </Grid>
+</UserControl>

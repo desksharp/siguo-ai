@@ -1,0 +1,1613 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>四国军旗人机对弈</title>
+<style>
+  :root {
+    --bg: #f4efe4; --panel: #fffdf8; --ink: #2b2620; --muted: #7a6f60; --line: #d9cdb6;
+    --board: #ead9b0; --rail: #3b2f22; --road: #8c7656; --accent: #c2410c; --ok: #15803d;
+    --btn: #fff; --soft: #eee3cf; --hover: #fbf3e2; --cur: #fff1c9; --dash: #e4d6ba; --corner: rgba(255,253,248,.78);
+    --rail2: #f5ecd6; --node: #f7efdc; --camp: #f1e6c8; --base: #e8d3a6; --board-img: none;
+  }
+  /* 棋盘风格（侧栏顶部切换，存在浏览器里）：只改颜色变量，棋子仍按四家配色 */
+  :root[data-theme="walnut"] {
+    --bg: #efe6d8; --line: #d6c3a5; --board: #c48f57; --rail: #2a1a0e; --road: #5b3a1e;
+    --rail2: #e8c48f; --node: #ecd3a8; --camp: #f3dfbb; --base: #ddb47b;
+    --board-img: repeating-linear-gradient(88deg, rgba(80,40,10,.10) 0 .3%, transparent .3% 1.6%),
+                 repeating-linear-gradient(92deg, rgba(255,235,200,.08) 0 .2%, transparent .2% 2.3%);
+  }
+  :root[data-theme="ink"] {
+    --bg: #e9e5dc; --panel: #fbfaf6; --ink: #1c1b19; --muted: #6f6a60; --line: #d3cdc0; --accent: #a8322d;
+    --board: #f4f0e6; --rail: #1c1c1c; --road: #6b665c; --rail2: #f4f0e6; --node: #fcfbf7; --camp: #ece7db; --base: #e0d9c8;
+    --soft: #e7e2d6; --hover: #f2efe7; --cur: #f6e7c4; --dash: #d9d2c3; --corner: rgba(251,250,246,.82);
+    --board-img: radial-gradient(circle at 20% 15%, rgba(0,0,0,.035), transparent 40%),
+                 radial-gradient(circle at 85% 80%, rgba(0,0,0,.04), transparent 45%);
+  }
+  :root[data-theme="jade"] {
+    --bg: #e4eee7; --panel: #f8fcf9; --ink: #1f2d27; --muted: #5f7a6c; --line: #b9d1c1; --accent: #b4532a;
+    --board: #cfe4d6; --rail: #1f3d33; --road: #4f7b68; --rail2: #e3f1e7; --node: #f3f9f4; --camp: #e0efe4; --base: #c6dfcf;
+    --soft: #d9e9de; --hover: #eaf4ec; --cur: #f6eec4; --dash: #c3d8c9; --corner: rgba(248,252,249,.8);
+    --board-img: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.18), transparent 70%);
+  }
+  :root[data-theme="slate"] {
+    --bg: #e5e8eb; --panel: #fbfcfd; --ink: #1f272e; --muted: #66737d; --line: #cdd5db;
+    --board: #aab5bd; --rail: #232d36; --road: #52616d; --rail2: #dde3e8; --node: #e9edf0; --camp: #d3dae0; --base: #bec8d0;
+    --soft: #dfe4e8; --hover: #eef1f3; --cur: #fbefc6; --dash: #d0d8de; --corner: rgba(251,252,253,.8);
+    --board-img: linear-gradient(135deg, rgba(255,255,255,.18), transparent 55%);
+  }
+  :root[data-theme="night"] {
+    --bg: #14171c; --panel: #1d2229; --ink: #e6e9ee; --muted: #9aa3ad; --line: #343c46; --accent: #f08a4b; --ok: #4ade80;
+    --board: #252b33; --rail: #cdb98c; --road: #5d6876; --rail2: #252b33; --node: #313944; --camp: #39434f; --base: #45505d;
+    --btn: #262c35; --soft: #2c333d; --hover: #252c35; --cur: #3d3620; --dash: #3a424d; --corner: rgba(29,34,41,.84);
+    --board-img: radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.05), transparent 70%);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.5 "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif; }
+  .wrap { display: flex; gap: 16px; padding: 16px; align-items: flex-start; max-width: 1320px; margin: 0 auto; }
+  .boardbox { flex: 1 1 auto; min-width: 0; width: 100%; }
+  .boardwrap { position: relative; width: 100%; max-width: 860px; margin: 0 auto; container-type: inline-size; }
+  svg#board { width: 100%; height: auto; display: block; user-select: none;
+              background: var(--board-img), var(--board); border-radius: 12px; box-shadow: 0 1px 0 var(--line), 0 8px 24px rgba(60,40,10,.12); }
+  .side { flex: 0 0 360px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  .status { font-size: 16px; font-weight: 600; }
+  .muted { color: var(--muted); }
+  .tabs { display: flex; gap: 6px; margin-top: 8px; }
+  .tabs button.on { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seat { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .seat.turn { outline: 2px solid var(--accent); }
+  .seat.dead { opacity: .45; }
+  .seat .nm { font-weight: 600; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  select, button, textarea { font: inherit; }
+  select { padding: 3px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--btn); color: var(--ink); }
+  button { padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--btn); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row + .row { margin-top: 8px; }
+  .log { max-height: 300px; overflow: auto; font-size: 13px; }
+  .log > div { padding: 2px 4px; border-bottom: 1px dashed var(--soft); }
+  .log > div.ev { cursor: pointer; border-radius: 4px; }
+  .log > div.ev:hover { background: var(--hover); }
+  .log > div.cur { background: var(--cur); }
+  .log .sub { font-size: 12px; color: var(--muted); padding-left: 16px; font-weight: 400; }
+  .log .dm { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .seat .stat { font-size: 12px; color: var(--muted); }
+  .seat .bar { height: 4px; background: var(--soft); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+  .seat .bar i { display: block; height: 100%; border-radius: 2px; }
+  .chartwrap { position: relative; margin-top: 4px; }
+  svg#chart { width: 100%; height: auto; display: block; }
+  .chart-grid { stroke: var(--soft); stroke-width: 1; }
+  .chart-axis { fill: var(--muted); font-size: 10px; }
+  .chart-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .ctip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+          padding: 4px 8px; font-size: 12px; box-shadow: 0 4px 12px rgba(60,40,10,.15); white-space: nowrap; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .seg { display: flex; gap: 4px; }
+  .seg button { padding: 2px 9px; font-size: 12px; }
+  .seg button.on { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .tl { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+  .tl input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .tl button { padding: 3px 9px; }
+  .tag { font-size: 11px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); font-weight: 400; margin-left: 4px; white-space: nowrap; }
+  .tag.good { color: #15803d; border-color: #b7dfc4; }
+  .tag.bad { color: #b91c1c; border-color: #f0c2c2; }
+  .anastats { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .anastats b { color: var(--ink); font-weight: 600; }
+  .piece text.guess { fill: #fff6d6; font-size: .27px; }
+  .piece .conf { fill: #ffe9a8; pointer-events: none; }
+  .piece .heat { pointer-events: none; }
+  .predmove { fill: none; stroke-linecap: round; marker-end: url(#arrow); pointer-events: none; }
+  .predlabel { font-size: .26px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none;
+               paint-order: stroke; stroke: #fffdf8; stroke-width: .08px; }
+  /* 棋盘四角的各家面板：按棋盘宽度缩放（cqw），窄时只留核心信息 */
+  .corner { position: absolute; display: flex; flex-direction: column; gap: .45em; padding: .8em .9em; overflow: hidden;
+            font-size: clamp(9px, 1.32cqw, 13px); line-height: 1.35; color: var(--ink);
+            background: var(--corner); border: 1px solid rgba(140,118,86,.35); border-radius: .9em; }
+  .corner.dead { opacity: .5; }
+  .corner .c-head { display: flex; align-items: center; gap: .4em; font-weight: 700; white-space: nowrap; }
+  .corner .c-head .c-sub { margin-left: auto; font-weight: 400; color: var(--muted); font-size: .9em; overflow: hidden; text-overflow: ellipsis; }
+  .corner .c-mat { display: flex; align-items: baseline; gap: .5em; }
+  .corner .c-mat b { font-size: 1.45em; font-variant-numeric: tabular-nums; }
+  .corner .c-meta { color: var(--muted); font-size: .9em; }
+  .corner .c-bar { height: .35em; background: var(--soft); border-radius: .2em; overflow: hidden; }
+  .corner .c-bar i { display: block; height: 100%; }
+  .corner svg.c-spark { width: 100%; height: 2.4em; display: block; }
+  .corner .c-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3em .45em; }
+  .corner .cc { display: flex; flex-direction: column; gap: .15em; }
+  .corner .cc .ct { display: flex; justify-content: space-between; font-size: .92em; }
+  .corner .cc .ct b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .corner .cc.zero .ct { color: var(--muted); text-decoration: line-through; }
+  .corner .cc .cb { display: flex; height: .3em; background: var(--soft); border-radius: .15em; overflow: hidden; }
+  .corner .c-title { color: var(--muted); font-size: .85em; }
+  .corner .c-foot { color: var(--muted); font-size: .88em; border-top: 1px dashed var(--dash); padding-top: .35em; }
+  @container (max-width: 640px) { .corner svg.c-spark, .corner .c-foot, .corner .c-title { display: none; } }
+  body.reviewing svg#board { box-shadow: 0 0 0 3px #e0a400, 0 8px 24px rgba(60,40,10,.12); }
+  .log .kill { color: var(--ok); } .log .killed { color: #b91c1c; } .log .both { color: #a16207; }
+  .log .capture_flag { color: #b91c1c; font-weight: 700; }
+  .msg { color: #b91c1c; min-height: 1.5em; }
+  .hint { font-size: 12px; color: var(--muted); margin: 6px 0; }
+  label.inline { display: flex; gap: 6px; align-items: center; }
+  .banner { font-size: 18px; font-weight: 700; }
+  .aisel { display: grid; grid-template-columns: auto 1fr; gap: 6px 8px; align-items: center; }
+  .palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .palette button { padding: 4px 2px; font-size: 13px; color: #fff; border: 2px solid transparent; }
+  .palette button.on { border-color: #ffd400; box-shadow: 0 0 0 1px #000 inset; }
+  .palette button small { opacity: .8; font-size: 11px; }
+  .owners button.on, .tools button.on { background: var(--ink); color: var(--panel); }
+  textarea { width: 100%; height: 70px; font-size: 11px; font-family: ui-monospace, monospace; border: 1px solid var(--line); border-radius: 6px; }
+  @media (max-width: 900px) { .wrap { flex-direction: column; } .side { flex: 1 1 auto; width: 100%; } }
+  /* SVG */
+  .road { stroke: var(--road); stroke-width: .045; fill: none; }
+  .rail { stroke: var(--rail); stroke-width: .11; fill: none; }
+  .rail2 { stroke: var(--rail2); stroke-width: .045; stroke-dasharray: .16 .16; fill: none; }
+  .node { fill: var(--node); stroke: var(--road); stroke-width: .035; }
+  .node.campn { fill: var(--camp); }
+  .node.basen { fill: var(--base); }
+  .hit { fill: transparent; cursor: pointer; }
+  .hit:hover { fill: rgba(255,212,0,.35); }
+  .piece .face { stroke: rgba(0,0,0,.32); stroke-width: .025; }
+  .piece .shine { fill: rgba(255,255,255,.2); stroke: none; pointer-events: none; }
+  .piece text { fill: #fff; font-size: .3px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none;
+                paint-order: stroke; stroke: rgba(0,0,0,.18); stroke-width: .02px; }
+  .piece text.mark { fill: #ffe9a8; font-size: .36px; }
+  .piece.inferred .face { stroke: #fff; stroke-dasharray: .07 .05; stroke-width: .04; }
+  .piece.god text { fill: #fff3b0; font-style: italic; }
+  .piece.click { cursor: pointer; }
+  .piece.markable { cursor: context-menu; }
+  .piece.last .face { stroke: #ffc928; stroke-width: .075; stroke-dasharray: none; }
+  .piece.sel .face { stroke: #ffd400; stroke-width: .09; stroke-dasharray: none; }
+  .trail { fill: none; stroke-width: .09; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+  .fromring { fill: none; stroke: #e0a400; stroke-width: .045; stroke-dasharray: .1 .07; pointer-events: none; }
+  .routeahead { fill: none; stroke-width: .17; stroke-dasharray: 0 .26; stroke-linecap: round; pointer-events: none;
+                 filter: drop-shadow(0 0 .04px rgba(255,255,255,.9)); }
+  .stepdot { fill: rgba(255, 243, 176, .85); stroke: rgba(0, 0, 0, .35); stroke-width: .02; pointer-events: none; }
+  .burst { fill: none; stroke: #fff3b0; stroke-width: .08; pointer-events: none; }
+  .markmenu { position: fixed; z-index: 10; background: #1f2a33; color: #e8eef2; border-radius: 10px; padding: 10px;
+              box-shadow: 0 10px 30px rgba(0,0,0,.35); width: 196px; }
+  .markmenu .mm-title { font-size: 13px; text-align: center; color: #b9c7d1; margin-bottom: 8px; }
+  .markmenu .mm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .markmenu button { background: #e9dcc0; color: #3a2a12; border: 0; border-radius: 6px; padding: 5px 0; font-weight: 700; font-size: 15px; }
+  .markmenu button:hover { background: #ffe9a8; }
+  .markmenu button.hot { background: #e58a2b; color: #fff; }
+  .markmenu button.sym { background: #37474f; color: #fff; }
+  .markmenu button.on { outline: 2px solid #ffd400; }
+  .markmenu .mm-clear { width: 100%; margin-top: 8px; background: #2e7d4f; color: #fff; font-size: 13px; }
+  .target { fill: rgba(21,128,61,.35); stroke: var(--ok); stroke-width: .05; cursor: pointer; }
+  .target.attack { fill: rgba(220,38,38,.25); stroke: #dc2626; }
+  .rvseats { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; }
+  .rvseats .seg button { padding: 2px 10px; }
+  #rvGame { flex: 1; min-width: 0; }
+  #rvLog { max-height: 260px; position: relative; }
+  .hintmove { stroke: #f59e0b; stroke-width: .13; stroke-dasharray: .2 .1; fill: none; marker-end: url(#arrow); }
+  .clabel { font-size: .42px; text-anchor: middle; dominant-baseline: central; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="boardbox"><div class="boardwrap" id="boardwrap"><svg id="board" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+  <div class="side">
+    <div class="card">
+      <h1>四国军旗 · 暗棋</h1>
+      <div class="status" id="status"></div>
+      <div class="msg" id="msg"></div>
+      <div class="row" style="margin-top:4px">
+        <label class="inline">棋盘风格 <select id="theme">
+          <option value="">经典米黄</option><option value="walnut">胡桃木纹</option><option value="ink">宣纸水墨</option>
+          <option value="jade">青绿呢面</option><option value="slate">青石灰</option><option value="night">夜间</option>
+        </select></label>
+      </div>
+      <div class="tabs" id="tabs">
+        <button data-mode="setup">布阵开局</button>
+        <button data-mode="editor">摆棋编辑</button>
+        <button data-mode="play">对局</button>
+        <button data-mode="review">复盘</button>
+      </div>
+    </div>
+
+    <div class="card" id="seatCard">
+      <h2>座位与 AI</h2>
+      <div class="row" style="margin-bottom:8px">
+        <label class="inline">你坐 <select id="seatSel">
+          <option value="0">南</option><option value="1">东</option><option value="2">北</option><option value="3">西</option>
+        </select></label>
+      </div>
+      <div class="aisel" id="aiSel"></div>
+    </div>
+
+    <div class="card" id="setupCard">
+      <h2>布阵</h2>
+      <p class="hint">点两颗子互换位置（自动检查：军旗在大本营，地雷在后两排，炸弹不在第一排）。</p>
+      <label class="inline"><input type="checkbox" id="editAll"> 调试：显示并编辑另外三家的布阵</label>
+      <div class="row" style="margin-top:8px">
+        <button id="reroll">换一套布阵</button>
+        <button class="primary" id="start">开始对局</button>
+      </div>
+    </div>
+
+    <div class="card" id="editorCard">
+      <h2>摆棋编辑</h2>
+      <div class="row owners" id="owners"></div>
+      <div class="row tools" id="tools">
+        <button data-tool="place">放子</button><button data-tool="move">挪子</button><button data-tool="erase">删子</button>
+      </div>
+      <div class="palette" id="palette" style="margin-top:8px"></div>
+      <p class="hint">放子：选好颜色和兵种，点棋盘上的点（点同样的子会删掉）。挪子：先点子再点目标点（目标有子则互换）。
+        数字是这家还能放几颗；军旗只能放自家大本营，地雷只能放自家后两排。</p>
+      <div class="row">
+        <label class="inline">先走 <select id="firstSel">
+          <option value="0">南</option><option value="1">东</option><option value="2">北</option><option value="3">西</option>
+        </select></label>
+        <button class="primary" id="edStart">从此局面开始</button>
+      </div>
+      <div class="row">
+        <button id="edClear">清空</button>
+        <button id="edFill">四家随机摆满</button>
+        <button id="edFromGame">读入当前对局</button>
+      </div>
+      <div class="row">
+        <button id="edExport">导出</button>
+        <button id="edImport">导入</button>
+        <button id="edSave">存到浏览器</button>
+        <select id="edSlots"><option value="">读取已存局面…</option></select>
+      </div>
+      <textarea id="edText" placeholder="导出的局面 JSON 会出现在这里；把 JSON 粘进来再点“导入”"></textarea>
+    </div>
+
+    <div class="card" id="playCard">
+      <div class="row">
+        <label class="inline">AI 速度 <select id="speed">
+          <option value="1200">慢</option><option value="500" selected>中</option><option value="120">快</option><option value="0">极快</option>
+        </select></label>
+        <label class="inline">动画 <select id="anim">
+          <option value="1.7">慢</option><option value="1" selected>中</option><option value="0.55">快</option><option value="0">关</option>
+        </select></label>
+        <button id="pause">暂停</button>
+        <button id="step1" title="暂停时让 AI 只走一步">单步</button>
+      </div>
+      <div class="row">
+        <button id="undo">悔棋</button>
+        <button id="hintBtn">提示</button>
+        <button id="toEditor" title="把当前真实局面带到摆棋编辑">局面→编辑</button>
+        <button id="again">重新开局</button>
+        <button id="toReview" title="四家明棋回看已经下完的对局">复盘</button>
+      </div>
+      <div class="row">
+        <label class="inline">暗子显示 <select id="overlay">
+          <option value="guess" selected>AI 读子</option><option value="big">大子概率</option>
+          <option value="mine">雷/旗概率</option><option value="none">不显示</option>
+        </select></label>
+        <label class="inline"><input type="checkbox" id="predOn" checked> 走法预测</label>
+      </div>
+      <div class="row">
+        <label class="inline"><input type="checkbox" id="god"> 上帝视角（调试：显示全部暗子，淡黄斜体）</label>
+      </div>
+      <p class="hint">点自己的子 → 绿圈能走，红圈能进攻。右键点别家的暗子可以做标记（会跟着棋子走）。
+        虚线框表示根据公开信息已经推断出的身份；鼠标停在暗子上可以看它还可能是哪些子。
+        黄框是刚走的子，虚线框是它出发的位置，彩色细线是最近几步的路线。
+        暗子上的小字是神经网络从你的视角猜的最可能身份，底部亮条是把握；箭头是对别家下一步的预测（回看时也显示 AI 对你的建议）。</p>
+    </div>
+
+    <div class="card" id="reviewCard">
+      <h2>复盘</h2>
+      <div class="row"><select id="rvGame"></select><button id="rvReload" title="刷新对局列表">刷新</button></div>
+      <div class="rvseats" id="rvSeats" style="margin-top:8px"></div>
+      <div class="row">
+        <button id="rvAllOpen">全部明棋</button><button id="rvMine">只明自己</button><button id="rvAllHidden">全部暗棋</button>
+      </div>
+      <div class="tl">
+        <button id="rvPrev" title="上一步（←）">◀</button>
+        <input type="range" id="rvTl" min="0" max="0" value="0">
+        <button id="rvNext" title="下一步（→）">▶</button>
+        <button id="rvPlay" title="自动播放（空格）">播放</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label class="inline">走子动画 <select id="rvAnim">
+          <option value="1.7">慢</option><option value="1" selected>中</option><option value="0.55">快</option><option value="0">关</option>
+        </select></label>
+        <label class="inline">每步停顿 <select id="rvSpeed">
+          <option value="1200">长</option><option value="500" selected>中</option><option value="150">短</option><option value="0">不停</option>
+        </select></label>
+      </div>
+      <div class="anastats" id="rvInfo"></div>
+      <div class="log" id="rvLog" style="margin-top:6px"></div>
+      <p class="hint">每局下完自动存到项目的 games 目录。明棋显示真实兵种，暗棋只显示棋子背面（已经亮出的军旗照常显示）。
+        前进一步时棋子会沿实际路线走过去（虚线是这步的路线）；点行棋记录跳到那一步；← → 逐步，Home / End 到头 / 到尾，空格播放 / 暂停。</p>
+    </div>
+
+    <div class="card">
+      <h2>四家</h2>
+      <div class="seats" id="seats"></div>
+    </div>
+    <div class="card" id="anaCard">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">局势分析</h2>
+        <div class="seg" id="chartTabs">
+          <button data-k="win" class="on" title="神经网络价值头从你的视角估计的你方（你和对家）胜率">胜率</button>
+          <button data-k="mat" title="已知子按分值算，暗子按候选兵种和剩余编制估计；满编 88">子力</button>
+          <button data-k="ent" title="暗子身份还剩多少不确定（各暗子熵之和，bit），越低说明摸得越清楚">未知度</button>
+        </div>
+      </div>
+      <div class="legend" id="legend" style="margin-top:6px"></div>
+      <div class="chartwrap"><svg id="chart"></svg><div class="ctip" id="ctip" hidden></div></div>
+      <div class="tl">
+        <button id="tlPrev" title="上一步（←）">◀</button>
+        <input type="range" id="tl" min="0" max="0" value="0">
+        <button id="tlNext" title="下一步（→）">▶</button>
+        <button id="tlLive" title="回到当前局面（End）">回到当前</button>
+      </div>
+      <div class="anastats" id="anaStats"></div>
+      <p class="hint" style="margin-bottom:0">只用你能看到的信息计算。拖动时间轴或点曲线、行棋记录可以回看任意一步；回看时 AI 暂停。</p>
+    </div>
+    <div class="card" id="logCard">
+      <h2>行棋记录</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+<div class="markmenu" id="markMenu" hidden>
+  <div class="mm-title">标记棋子</div>
+  <div class="mm-grid" id="markGrid"></div>
+  <button class="mm-clear" id="markClear">删除标记</button>
+</div>
+<script>
+const SEAT = ["南", "东", "北", "西"];
+const HEX = ["#d14343", "#2f74c9", "#2c9a58", "#8a52c4"];
+const QUOTA = [1, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1, 1];
+const OUT = { move: "", kill: "· 进攻得手", killed: "· 进攻失败（攻方阵亡）", both: "· 同归于尽", capture_flag: "· 夺旗！" };
+const END = { team_eliminated: "一方全部出局", max_plies: "步数上限", no_combat: "长时间无碰子" };
+// 右键标记：符号 + 兵种简称；炸弹 / 地雷 / 军旗用橙色
+const MARKS = ["!", "?", "大", "小", "司", "军", "师", "旅", "团", "营", "连", "排", "兵", "雷", "弹", "旗"];
+const HOT_MARKS = new Set(["雷", "弹", "旗"]);
+const $ = (id) => document.getElementById(id);
+const svg = $("board");
+// 棋盘风格：html 上的 data-theme 切换一组颜色变量（见样式表），空 = 经典米黄
+function setTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+try { setTheme(localStorage.getItem("junqi.theme") || ""); } catch {}
+const NS = "http://www.w3.org/2000/svg";
+
+let B = null;            // 棋盘几何
+let S = null;            // 服务器对局状态
+let mode = "setup";      // setup | editor | play | review
+let human = 0;
+let setups = {};         // 布阵阶段：{座位: 30 个兵种}
+let swapSel = null;      // 布阵阶段选中的 [座位, 序号]
+let sel = -1;            // 对局中选中的子
+let hintMv = null;
+let paused = false;
+let aiTimer = null;
+let aliveBefore = null;
+let eliminated = [];
+let busy = false;        // 正在播放走子动画 / 等服务器
+let marks = {};          // 节点 → 标记（棋子走到哪，标记跟到哪）
+let marksAt = {};        // 步数 → 当时的标记（悔棋时恢复）
+let markNode = -1;       // 右键菜单正在标记的节点
+let TL = [];             // 分析曲线：TL[i] 是走完 i 步后的汇总（子力 / 未知度 / 子数）
+let view = null;         // 回看中的那一帧（null = 当前局面）
+let seekTok = 0;
+let chartKey = "win";
+// 复盘：g = 服务端重放的整局（frames[i] = 走完 i 步的完整局面，events[i] = 第 i+1 步），open = 四家各自明棋 / 暗棋
+// shown = 动画开始前临时画出的那一帧；tok 每次跳转加一，用来打断还没播完的动画；run = 正在自动播放的那一轮
+const RV = { g: null, i: 0, shown: null, open: [true, true, true, true], playing: false, run: 0, tok: 0, logKey: "" };
+const SHORT = ["旗", "雷", "弹", "兵", "排", "连", "营", "团", "旅", "师", "军", "司"];
+const ed = { types: Array(129).fill(-1), owners: Array(129).fill(-1), owner: 0, type: 11, tool: "place", pick: -1 };
+
+const api = async (path, body) => {
+  const r = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return r.json();
+};
+const el = (tag, attrs = {}, parent = svg) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  parent && parent.appendChild(e);
+  return e;
+};
+const say = (t) => { $("msg").textContent = t || ""; };
+const rel = (s) => (s - human + 4) % 4;
+const role = (s) => ["你", "下家", "对家（队友）", "上家"][rel(s)];
+
+// 把 human 的营区转到下方：(x,y) → (16-y, x) 转 human 次
+function pos(n) {
+  let { x, y } = B.nodes[n];
+  for (let k = 0; k < human; k++) [x, y] = [16 - y, x];
+  return [x, y];
+}
+function nodeName(n) {
+  const d = B.nodes[n];
+  return d.seat < 0 ? "九宫" : `${SEAT[d.seat]}${d.row + 1}排${d.col + 1}列`;
+}
+const aiChoice = () => { const ai = {}; for (let s = 0; s < 4; s++) if (s !== human) ai[s] = $("ai" + s).value; return ai; };
+
+// ---------------- 初始化
+async function init() {
+  B = await api("/api/board");
+  const box = $("aiSel");
+  for (let s = 0; s < 4; s++) {
+    const lab = document.createElement("span");
+    lab.innerHTML = `<span class="dot" style="background:${HEX[s]}"></span><span data-role="${s}"></span>`;
+    const sl = document.createElement("select");
+    sl.id = "ai" + s;
+    for (const k of B.ai_kinds) sl.add(new Option(k.name, k.id));
+    box.append(lab, sl);
+  }
+  const ow = $("owners");
+  for (let s = 0; s < 4; s++) {
+    const b = document.createElement("button");
+    b.dataset.owner = s;
+    b.innerHTML = `<span class="dot" style="background:${HEX[s]}"></span>${SEAT[s]}`;
+    b.onclick = () => { ed.owner = s; ed.tool = "place"; renderEditorUi(); };
+    ow.appendChild(b);
+  }
+  for (const b of $("tools").children) b.onclick = () => { ed.tool = b.dataset.tool; ed.pick = -1; renderEditorUi(); draw(); };
+  for (const b of $("tabs").children) b.onclick = () => setMode(b.dataset.mode);
+
+  $("seatSel").onchange = () => { human = +$("seatSel").value; refreshLabels(); draw(); };
+  $("reroll").onclick = reroll;
+  $("editAll").onchange = () => { swapSel = null; draw(); };
+  $("start").onclick = start;
+  $("again").onclick = () => setMode("setup");
+  $("pause").onclick = () => { paused = !paused; $("pause").textContent = paused ? "继续" : "暂停"; renderStatus(); if (!paused) loop(); };
+  $("step1").onclick = aiOnce;
+  $("undo").onclick = undo;
+  $("hintBtn").onclick = hint;
+  $("god").onchange = async () => { S = await api("/api/god", { on: $("god").checked }); update(); };
+  $("toEditor").onclick = fromGame;
+  $("toReview").onclick = () => setMode("review");
+  $("rvGame").onchange = () => rvOpen($("rvGame").value);
+  $("rvReload").onclick = () => rvLoadList(RV.g && RV.g.id);
+  $("rvTl").oninput = () => rvSeek(+$("rvTl").value);
+  $("rvPrev").onclick = () => rvSeek(RV.i - 1);
+  $("rvNext").onclick = () => rvSeek(RV.i + 1, true);
+  $("rvPlay").onclick = rvToggle;
+  $("rvAllOpen").onclick = () => rvSetOpen([true, true, true, true]);
+  $("rvMine").onclick = () => rvSetOpen([0, 1, 2, 3].map(s => s === human));
+  $("rvAllHidden").onclick = () => rvSetOpen([false, false, false, false]);
+  try { const v = JSON.parse(localStorage.getItem("junqi.rvOpen") || "null"); if (Array.isArray(v) && v.length === 4) RV.open = v.map(Boolean); } catch {}
+  for (const id of ["speed", "anim", "overlay", "rvAnim", "rvSpeed"]) {
+    try { const v = localStorage.getItem("junqi." + id); if (v !== null) $(id).value = v; } catch {}
+    $(id).addEventListener("change", () => { try { localStorage.setItem("junqi." + id, $(id).value); } catch {} });
+  }
+  $("theme").value = document.documentElement.dataset.theme || "";
+  $("theme").onchange = () => { setTheme($("theme").value); try { localStorage.setItem("junqi.theme", $("theme").value); } catch {} };
+  try { const v = localStorage.getItem("junqi.predOn"); if (v !== null) $("predOn").checked = v === "1"; } catch {}
+  $("predOn").onchange = () => { try { localStorage.setItem("junqi.predOn", $("predOn").checked ? "1" : "0"); } catch {} draw(); };
+  $("overlay").addEventListener("change", () => draw());
+  const grid = $("markGrid");
+  for (const m of MARKS) {
+    const b = document.createElement("button");
+    b.textContent = m;
+    b.dataset.mark = m;
+    if (HOT_MARKS.has(m)) b.className = "hot"; else if ("!?大小".includes(m)) b.className = "sym";
+    b.onclick = () => setMark(m);
+    grid.appendChild(b);
+  }
+  $("markClear").onclick = () => setMark(null);
+  svg.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("mousedown", (e) => { if (!$("markMenu").contains(e.target)) closeMarkMenu(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMarkMenu();
+    if (mode === "review" && RV.g && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) {
+      const k = { ArrowLeft: () => rvSeek(RV.i - 1), ArrowRight: () => rvSeek(RV.i + 1, true), Home: () => rvSeek(0),
+                  End: () => rvSeek(RV.g.frames.length - 1), " ": rvToggle }[e.key];
+      if (k) { e.preventDefault(); k(); }
+      return;
+    }
+    if (mode !== "play" || !S || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key === "ArrowLeft") { e.preventDefault(); seek(viewIdx() - 1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); seek(viewIdx() + 1); }
+    else if (e.key === "End") { e.preventDefault(); seek(TL.length - 1); }
+  });
+  for (const b of $("chartTabs").children) b.onclick = () => {
+    chartKey = b.dataset.k;
+    for (const x of $("chartTabs").children) x.classList.toggle("on", x === b);
+    renderAnalysis();
+  };
+  $("tl").oninput = () => seek(+$("tl").value);
+  $("tlPrev").onclick = () => seek(viewIdx() - 1);
+  $("tlNext").onclick = () => seek(viewIdx() + 1);
+  $("tlLive").onclick = () => seek(TL.length - 1);
+  initChart();
+  window.addEventListener("scroll", closeMarkMenu, true);
+  $("edStart").onclick = edStart;
+  $("edClear").onclick = () => { ed.types.fill(-1); ed.owners.fill(-1); renderEditorUi(); draw(); };
+  $("edFill").onclick = edFill;
+  $("edFromGame").onclick = fromGame;
+  $("edExport").onclick = edExport;
+  $("edImport").onclick = () => edImport($("edText").value);
+  $("edSave").onclick = edSave;
+  $("edSlots").onchange = () => { const v = $("edSlots").value; if (v) edImport(slots()[v]); $("edSlots").value = ""; };
+  refreshSlots();
+
+  await reroll();
+  const st = await api("/api/state");
+  if (st.started && !st.over) { S = st; human = st.human; $("seatSel").value = human; $("god").checked = st.god; resetMarks(); setMode("play"); }
+  else setMode("setup");
+}
+
+function setMode(m) {
+  if (m === "play" && !S) { say("还没有对局，先在“布阵开局”或“摆棋编辑”里开始一局"); return; }
+  if (mode === "review" && m !== "review") { rvStop(); RV.tok++; }
+  mode = m;
+  clearTimeout(aiTimer);
+  // 复盘时棋盘按那局里你的座位摆放，离开复盘恢复
+  if (m !== "review") human = m === "play" ? S.human : +$("seatSel").value;
+  for (const b of $("tabs").children) b.classList.toggle("on", b.dataset.mode === m);
+  $("setupCard").style.display = m === "setup" ? "" : "none";
+  $("editorCard").style.display = m === "editor" ? "" : "none";
+  $("playCard").style.display = m === "play" ? "" : "none";
+  $("reviewCard").style.display = m === "review" ? "" : "none";
+  $("seatCard").style.display = m === "play" || m === "review" ? "none" : "";
+  $("logCard").style.display = m === "play" ? "" : "none";
+  $("anaCard").style.display = m === "play" ? "" : "none";
+  if (m !== "play") view = null;
+  document.body.classList.toggle("reviewing", !!view);
+  say("");
+  sel = -1; hintMv = null; ed.pick = -1;
+  if (m === "editor") renderEditorUi();
+  if (m === "review") { RV.g = null; draw(); renderStatus(); renderCorners(); rvLoadList(S && S.saved_id); return; }
+  refreshLabels();
+  if (m === "play") update(); else { draw(); renderStatus(); renderCorners(); }
+}
+
+// ---------------- 复盘
+async function rvLoadList(pick) {
+  const r = await api("/api/games");
+  const box = $("rvGame");
+  box.innerHTML = "";
+  const tags = { team_eliminated: "", max_plies: " · 步数上限", no_combat: " · 无碰子判和" };
+  for (const g of r.items) {
+    const res = g.winner < 0 ? "和棋" : g.winner === g.team[g.human] ? "你方胜" : "你方负";
+    box.add(new Option(`${g.saved} · ${SEAT[g.human]}家 · ${res} · ${g.plies} 步${tags[g.end_reason] || ""}${g.origin === "position" ? " · 摆棋" : ""}`, g.id));
+  }
+  if (!r.items.length) {
+    box.add(new Option("还没有下完的对局", ""));
+    RV.g = null; rvRender();
+    return say("还没有已保存的对局：下完一局后会自动保存");
+  }
+  const id = r.items.some(g => g.id === pick) ? pick : r.items[0].id;
+  box.value = id;
+  if (mode === "review") rvOpen(id);
+}
+
+async function rvOpen(id) {
+  if (!id) return;
+  rvStop(); RV.tok++;
+  const r = await api("/api/replay?id=" + encodeURIComponent(id));
+  if (mode !== "review") return;
+  if (r.error) { say(r.error); return; }
+  say("");
+  RV.g = r; RV.i = 0; RV.logKey = "";
+  human = r.human;
+  $("rvTl").max = r.frames.length - 1;
+  rvRender();
+}
+
+// 跳到第 i 步。anim 且正好前进一步时，先画上一帧，让棋子沿实际路线走过去再画新局面；
+// 动画中途再跳转会打断它（tok 变了），新局面直接画出来
+async function rvSeek(i, anim = false) {
+  if (!RV.g) return;
+  i = Math.max(0, Math.min(RV.g.frames.length - 1, i));
+  const from = RV.i, tok = ++RV.tok, f = +$("rvAnim").value;
+  RV.i = i;
+  if (anim && f && i === from + 1) {
+    RV.shown = from; draw(); RV.shown = null;
+    try { await animateMove(RV.g.events[from], f, () => tok === RV.tok); } catch (err) { console.error(err); }
+    if (tok !== RV.tok) return;
+  }
+  rvRender();
+}
+
+function rvStop() { RV.playing = false; RV.run++; $("rvPlay").textContent = "播放"; }
+async function rvToggle() {
+  if (!RV.g) return;
+  if (RV.playing) return rvStop();
+  if (RV.i >= RV.g.frames.length - 1) await rvSeek(0);
+  const run = ++RV.run;
+  RV.playing = true;
+  $("rvPlay").textContent = "暂停";
+  while (run === RV.run && RV.g && RV.i < RV.g.frames.length - 1) {
+    await rvSeek(RV.i + 1, true);
+    if (run !== RV.run) return;
+    await sleep(+$("rvSpeed").value);
+  }
+  if (run === RV.run) rvStop();
+}
+
+function rvSetOpen(o) {
+  RV.open = o.map(Boolean);
+  try { localStorage.setItem("junqi.rvOpen", JSON.stringify(RV.open)); } catch {}
+  rvRender();
+}
+
+// 一步的文字：明棋写兵种，暗棋写“暗子”
+function rvEvText(e) {
+  const R = RV.g, f = R.frames[e.ply - 1];
+  const show = (seat, t) => (RV.open[seat] || (t === 0 && f.flag[seat]) ? B.types[t] : "暗子");
+  const who = `${SEAT[e.seat]}${e.seat === R.human ? "（你）" : ""}`;
+  const tgt = e.tt !== null ? ` 碰 ${SEAT[e.ts]}${show(e.ts, e.tt)}` : "";
+  return `${who} ${show(e.seat, e.mt)} ${nodeName(e.from)}→${nodeName(e.to)}${tgt} <span class="${e.outcome}">${OUT[e.outcome] || ""}</span>`;
+}
+
+function rvRender() {
+  renderStatus(); renderSeats(); renderCorners(); draw();
+  const box = $("rvSeats"), R = RV.g;
+  box.innerHTML = "";
+  for (let s = 0; s < 4; s++) {
+    const lab = document.createElement("span");
+    lab.innerHTML = `<span class="dot" style="background:${HEX[s]}"></span>${SEAT[s]} · ${R ? role(s) + " · " + R.names[s] : ""}`;
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    for (const [txt, v] of [["明棋", true], ["暗棋", false]]) {
+      const b = document.createElement("button");
+      b.textContent = txt;
+      b.classList.toggle("on", RV.open[s] === v);
+      b.onclick = () => { const o = RV.open.slice(); o[s] = v; rvSetOpen(o); };
+      seg.appendChild(b);
+    }
+    box.append(lab, seg);
+  }
+  if (!R) { $("rvInfo").textContent = ""; $("rvLog").innerHTML = ""; return; }
+  $("rvTl").value = RV.i;
+  const e = R.events[RV.i - 1];
+  $("rvInfo").innerHTML = `第 <b>${RV.i}</b> / ${R.events.length} 步` + (e ? `：${rvEvText(e)}` : "：开局布阵") +
+    (RV.i < R.events.length ? ` · 下一步轮到 ${SEAT[R.frames[RV.i].seat]}` : "");
+  // 行棋记录：换局或明暗变了才重建，平时只移动高亮
+  const key = `${R.id}|${RV.open.join()}`;
+  const log = $("rvLog");
+  if (key !== RV.logKey) {
+    RV.logKey = key;
+    log.innerHTML = "";
+    for (const ev of R.events) {
+      const d = document.createElement("div");
+      d.className = "ev";
+      d.innerHTML = `<span class="muted">${ev.ply}.</span> ${rvEvText(ev)}`;
+      d.onclick = () => rvSeek(ev.ply, true);
+      log.appendChild(d);
+    }
+  }
+  for (const d of log.querySelectorAll(".cur")) d.classList.remove("cur");
+  const cur = log.children[RV.i - 1];
+  if (cur) { cur.classList.add("cur"); if (cur.offsetTop < log.scrollTop || cur.offsetTop > log.scrollTop + log.clientHeight - 24) log.scrollTop = cur.offsetTop - log.clientHeight / 2; }
+}
+
+function refreshLabels() {
+  for (let s = 0; s < 4; s++) {
+    document.querySelector(`[data-role="${s}"]`).textContent = `${SEAT[s]}·${role(s)}`;
+    $("ai" + s).disabled = s === human;
+  }
+  renderSeats();
+}
+
+// ---------------- 布阵
+async function reroll() {
+  const all = {};
+  for (let s = 0; s < 4; s++) all[s] = (await api("/api/setup")).setup;
+  setups = all;
+  swapSel = null;
+  if (mode === "setup") draw();
+}
+
+async function start() {
+  const body = { human, ai: aiChoice(), setups: $("editAll").checked ? setups : { [human]: setups[human] } };
+  const st = await api("/api/new", body);
+  if (st.error) return say(st.error);
+  startPlay(st);
+}
+
+function startPlay(st) {
+  S = st; aliveBefore = null; eliminated = []; paused = false; view = null; TL = [];
+  resetMarks();
+  $("pause").textContent = "暂停";
+  $("god").checked = st.god;
+  setMode("play");
+}
+
+async function clickSetup(s, i) {
+  if (!swapSel || swapSel[0] !== s) { swapSel = [s, i]; return draw(); }
+  if (swapSel[1] === i) { swapSel = null; return draw(); }
+  const next = setups[s].slice();
+  [next[swapSel[1]], next[i]] = [next[i], next[swapSel[1]]];
+  const r = await api("/api/validate", { setup: next });
+  if (r.ok) { setups[s] = next; say(""); }
+  else say("这样换不合规（军旗必须在大本营，地雷在后两排，炸弹不在第一排）");
+  swapSel = null;
+  draw();
+}
+
+// ---------------- 对局
+function update() {
+  syncTimeline();
+  document.body.classList.toggle("reviewing", !!view);
+  draw(); renderSeats(); renderLog(); renderStatus(); renderAnalysis(); renderCorners(); loop();
+}
+
+// 服务端每次只带最后几帧（timeline_tail），按 start 拼到本地；接不上（比如刚打开网页）就整条重取
+function syncTimeline() {
+  const t = S && S.timeline_tail;
+  if (!t) return;
+  if (t.start <= TL.length) { TL = TL.slice(0, t.start).concat(t.items); return; }
+  api("/api/timeline").then(r => { TL = r.items; renderSeats(); renderAnalysis(); renderCorners(); });
+}
+
+const viewIdx = () => (view ? view.i : TL.length - 1);
+
+// 回看第 i 帧（最后一帧就是回到当前）。回看期间 AI 暂停、不能走子。
+// 正好前进一步时先播这一步的走子动画（棋盘上还是上一帧）
+async function seek(i) {
+  if (mode !== "play" || !S || !TL.length) return;
+  const last = TL.length - 1, cur = viewIdx();
+  i = Math.max(0, Math.min(last, i));
+  const tok = ++seekTok, alive = () => tok === seekTok && mode === "play";
+  const stepAnim = async (evs) => {
+    const e = i === cur + 1 && evs && evs[evs.length - 1];
+    if (e) try { await animateMove(e, animFactor(), alive); } catch (err) { console.error(err); }
+  };
+  if (i === last) {
+    if (!view) return;
+    clearTimeout(aiTimer);
+    await stepAnim(S.events);
+    if (!alive()) return;
+    view = null; sel = -1; update();
+    return;
+  }
+  const f = await api("/api/frame?i=" + i);
+  if (!alive()) return;
+  if (f.error) return say(f.error);
+  clearTimeout(aiTimer);
+  await stepAnim(f.events);
+  if (!alive()) return;
+  view = f; sel = -1; hintMv = null;
+  clearTimeout(aiTimer); closeMarkMenu();
+  update();
+}
+
+function loop() {
+  clearTimeout(aiTimer);
+  if (mode !== "play" || !S || S.over || paused || view || S.current === human) return;
+  aiTimer = setTimeout(aiOnce, +$("speed").value);
+}
+
+async function aiOnce() {
+  if (busy || view || !S || S.over || S.current === human) return;
+  busy = true;
+  let st;
+  try { st = await api("/api/ai", {}); } finally { busy = false; }
+  hintMv = null;
+  await applyState(st);
+}
+
+async function move(f, t) {
+  if (busy || view) return;
+  sel = -1; hintMv = null;
+  draw();
+  busy = true;
+  let st;
+  try { st = await api("/api/move", { from: f, to: t }); } finally { busy = false; }
+  if (st.error) { say(st.error); return draw(); }
+  say("");
+  await applyState(st);
+}
+
+// 新局面到了：只多了一步就先沿实际路线播放动画，再整体重画；标记跟着棋子走
+async function applyState(st) {
+  const prev = S;
+  const fresh = prev && mode === "play" ? st.events.filter(e => e.ply > prev.ply) : [];
+  if (fresh.length === 1 && !view) {  // 回看时棋盘上是旧局面，不播动画
+    busy = true;
+    try { await animateMove(fresh[0]); } catch (err) { console.error(err); } finally { busy = false; }
+  }
+  for (const e of fresh) followMarks(e);
+  S = st;
+  update();
+}
+
+// ---------------- 标记
+function resetMarks() { marks = {}; marksAt = { [S ? S.ply : 0]: {} }; closeMarkMenu(); }
+
+function followMarks(e) {
+  const m = marks[e.from];
+  delete marks[e.from];
+  if (e.outcome === "move") { if (m) marks[e.to] = m; }
+  else if (e.outcome === "kill" || e.outcome === "capture_flag") { delete marks[e.to]; if (m) marks[e.to] = m; }
+  else if (e.outcome === "both") delete marks[e.to];
+  // killed：进攻方阵亡，守方和它的标记留在原地
+  marksAt[e.ply] = { ...marks };
+}
+
+function openMarkMenu(ev, node) {
+  markNode = node;
+  const box = $("markMenu");
+  for (const b of $("markGrid").children) b.classList.toggle("on", marks[node] === b.dataset.mark);
+  box.hidden = false;
+  const w = box.offsetWidth, h = box.offsetHeight;
+  box.style.left = Math.min(ev.clientX + 6, innerWidth - w - 8) + "px";
+  box.style.top = Math.min(ev.clientY + 6, innerHeight - h - 8) + "px";
+}
+
+function closeMarkMenu() { $("markMenu").hidden = true; markNode = -1; }
+
+function setMark(m) {
+  if (markNode < 0) return;
+  if (m) marks[markNode] = m; else delete marks[markNode];
+  marksAt[S.ply] = { ...marks };
+  closeMarkMenu();
+  draw();
+}
+
+// ---------------- 走子动画
+const animFactor = () => +$("anim").value;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+function tween(ms, fn, alive = () => true) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const frame = (now) => {
+      if (!alive()) return res();
+      const u = Math.min(1, (now - t0) / Math.max(ms, 1)); fn(u); u < 1 ? requestAnimationFrame(frame) : res();
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+// 相邻两点之间的一段：普通直线，或相邻两家之间的弧线（与棋盘连线画法一致）
+function seg(a, b) {
+  const [x1, y1] = pos(a), [x2, y2] = pos(b);
+  const na = B.nodes[a], nb = B.nodes[b];
+  if (na.seat >= 0 && nb.seat >= 0 && na.seat !== nb.seat) {
+    const far = Math.abs(x1 - 8) > Math.abs(y1 - 8);
+    const cx = far ? x1 : x2, cy = far ? y2 : y1;
+    const at = (t) => [(1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2, (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2];
+    let len = 0, [px, py] = [x1, y1];
+    for (let i = 1; i <= 12; i++) { const [qx, qy] = at(i / 12); len += Math.hypot(qx - px, qy - py); [px, py] = [qx, qy]; }
+    return { len, at, d: `Q${cx},${cy} ${x2},${y2}` };
+  }
+  return { len: Math.hypot(x2 - x1, y2 - y1), at: (t) => [x1 + (x2 - x1) * t, y1 + (y2 - y1) * t], d: `L${x2},${y2}` };
+}
+
+// 一条路线对应的 SVG 路径（画走子轨迹用）
+function route(path) {
+  const [x0, y0] = pos(path[0]);
+  let d = `M${x0},${y0}`;
+  for (let i = 0; i + 1 < path.length; i++) d += " " + seg(path[i], path[i + 1]).d;
+  return { d };
+}
+const pathOf = (e) => (e.path && e.path.length > 1 ? e.path : [e.from, e.to]);
+const pieceAt = (node, except) => [...svg.querySelectorAll(`g.piece[data-node="${node}"]`)].find(g => g !== except);
+
+// f：动画快慢（越大越慢）；alive() 变成 false 时立刻停下（复盘里中途跳到别的步）
+async function animateMove(e, f = animFactor(), alive = () => true) {
+  const g = pieceAt(e.from);
+  if (!f || !g || !B) return;
+  closeMarkMenu();
+  for (const x of svg.querySelectorAll(".target, .hintmove")) x.remove();
+  svg.appendChild(g);  // 移动中的子画在最上层
+  const path = pathOf(e), [x0, y0] = pos(e.from);
+  // 先用走子方的颜色画出整条路线，停一下再走，看得出要去哪
+  const ahead = svg.insertBefore(el("path", { d: route(path).d, class: "routeahead", stroke: HEX[e.seat] }), g);
+  await tween(160 * f, (u) => { ahead.style.opacity = u; }, alive);
+  // 逐格走：每一格匀速、时长相同（弧线段按长度略长），走过的格子留一个小点
+  for (let i = 0; i + 1 < path.length && alive(); i++) {
+    const s = seg(path[i], path[i + 1]);
+    await tween((90 + 60 * s.len) * f, (u) => {
+      const [x, y] = s.at(u);
+      g.setAttribute("transform", `translate(${x - x0} ${y - y0})`);
+    }, alive);
+    if (i + 2 < path.length && alive()) {
+      const [px, py] = pos(path[i + 1]);
+      svg.insertBefore(el("circle", { cx: px, cy: py, r: .1, class: "stepdot" }), g);
+    }
+  }
+  if (!alive()) return;
+  if (e.outcome === "move") return sleep(120 * f);
+
+  // 碰子：冲击波，然后输的一方淡出
+  const [tx, ty] = pos(e.to);
+  const ring = el("circle", { cx: tx, cy: ty, r: .3, class: "burst" });
+  if (e.outcome === "capture_flag") ring.style.stroke = "#ffd400";
+  const def = pieceAt(e.to, g);
+  const losers = e.outcome === "killed" ? [g] : e.outcome === "both" ? [g, def] : [def];
+  await tween(260 * f, (u) => { ring.setAttribute("r", .3 + .7 * u); ring.style.opacity = 1 - u; }, alive);
+  ring.remove();
+  if (!alive()) return;
+  const shrink = (p, u) => {  // 以目标点为中心缩小并淡出（进攻方已经在目标点上）
+    if (!p) return;
+    const [dx, dy] = p === g ? [tx - x0, ty - y0] : [0, 0];
+    p.setAttribute("transform", `translate(${tx} ${ty}) scale(${1 - .25 * u}) translate(${-tx} ${-ty}) translate(${dx} ${dy})`);
+    p.style.opacity = 1 - u;
+  };
+  await tween(320 * f, (u) => losers.forEach(p => shrink(p, u)), alive);
+  await sleep(60 * f);
+}
+
+async function undo() {
+  if (busy) return;
+  const st = await api("/api/undo", {});
+  if (st.error) return say(st.error);
+  S = st; sel = -1; hintMv = null; view = null; aliveBefore = S.alive.slice();
+  marks = { ...(marksAt[S.ply] || {}) };
+  eliminated = eliminated.filter(x => x.ply < S.ply);
+  update();
+  say("已悔棋，回到你上一步之前");
+}
+
+async function hint() {
+  if (view) await seek(TL.length - 1);
+  const h = await api("/api/hint", {});
+  if (h.error) return say(h.error);
+  hintMv = h;
+  draw();
+  say(`提示（${h.by === "neural" ? "神经网络" : "规则 AI"}）：${nodeName(h.from)} → ${nodeName(h.to)}`);
+}
+
+function renderStatus() {
+  const st = $("status");
+  if (mode === "setup") { st.textContent = "准备布阵"; return; }
+  if (mode === "editor") { st.textContent = "摆棋编辑"; return; }
+  if (mode === "review") {
+    const R = RV.g;
+    if (!R) { st.textContent = "复盘"; return; }
+    const txt = R.winner < 0 ? "和棋" : R.winner === R.team[R.human] ? "你方获胜" : "你方告负";
+    st.innerHTML = `<span style="color:#a16207">复盘：第 ${RV.i} / ${R.events.length} 步</span> <span class="muted">· ${txt}（${END[R.end_reason] || R.end_reason}）</span>`;
+    return;
+  }
+  if (view) {
+    st.innerHTML = `<span style="color:#a16207">回看：第 ${view.ply} 步</span> <span class="muted">/ 共 ${S.ply} 步，按“回到当前”继续</span>`;
+    return;
+  }
+  if (S.over) {
+    const txt = S.winner < 0 ? "和棋" : S.winner === S.team[human] ? "你方获胜！" : "你方告负";
+    st.innerHTML = `<span class="banner">${txt}</span> <span class="muted">（${END[S.end_reason] || S.end_reason}，共 ${S.ply} 步）</span>`;
+    return;
+  }
+  const win = S.wdl ? ` <span class="muted" style="font-size:13px;font-weight:400">· 你方胜率 ${Math.round(S.wdl[0] * 100)}%</span>` : "";
+  if (!S.alive[human]) st.innerHTML = `你已出局，观战中… 轮到 ${SEAT[S.current]}${win}`;
+  else if (S.current === human) st.innerHTML = `<span style="color:var(--accent)">轮到你走</span> <span class="muted">第 ${S.ply + 1} 步</span>${win}`;
+  else st.innerHTML = `${SEAT[S.current]}（${role(S.current)}）${paused ? "等待中（已暂停）" : "思考中…"}${win}`;
+}
+
+function renderSeats() {
+  const box = $("seats");
+  box.innerHTML = "";
+  const inPlay = mode === "play" && S;
+  if (mode === "review") {
+    const R = RV.g, f = R && R.frames[RV.i];
+    for (let s = 0; s < 4; s++) {
+      const d = document.createElement("div");
+      d.className = "seat" + (f && !f.alive[s] ? " dead" : "") + (f && RV.i < R.events.length && f.seat === s ? " turn" : "");
+      const extra = f ? [!f.alive[s] ? "已出局" : "", f.flag[s] ? "军旗已亮" : "", RV.open[s] ? "明棋" : "暗棋"].filter(Boolean).join(" · ") : "";
+      d.innerHTML = `<div class="nm"><span class="dot" style="background:${HEX[s]}"></span>${SEAT[s]} · ${role(s)}</div>
+        <div class="muted" style="font-size:12px">${R ? R.names[s] : ""}${extra ? "<br>" + extra : ""}</div>` +
+        (f ? `<div class="stat">${RV.open[s] ? `子力 ${f.mat[s].toFixed(1)} · ` : ""}${f.p.filter(x => x[2] === s).length} 子</div>
+        <div class="bar"><i style="width:${RV.open[s] ? Math.min(100, f.mat[s] / 88 * 100) : 0}%;background:${HEX[s]}"></i></div>` : "");
+      box.appendChild(d);
+    }
+    return;
+  }
+  for (let s = 0; s < 4; s++) {
+    const d = document.createElement("div");
+    d.className = "seat" + (inPlay && !S.over && S.current === s ? " turn" : "") + (inPlay && !S.alive[s] ? " dead" : "");
+    const kind = inPlay ? S.ai[s] : $("ai" + s)?.value;
+    const aiName = s === human ? "人类" : (B.ai_kinds.find(k => k.id === kind) || {}).name || "";
+    const extra = inPlay ? [!S.alive[s] ? "已出局" : "", S.flag_revealed[s] ? "军旗已亮" : ""].filter(Boolean).join(" · ") : "";
+    const t = inPlay && TL[viewIdx()];
+    const stat = t ? `<div class="stat">子力 ${t.mat[s].toFixed(1)} · ${t.pieces[s]} 子` +
+      (t.hidden[s] ? `（暗 ${t.hidden[s]}）· 未知 ${t.ent[s].toFixed(1)} bit` : "") + `</div>
+      <div class="bar"><i style="width:${Math.min(100, t.mat[s] / 88 * 100)}%;background:${HEX[s]}"></i></div>` : "";
+    d.innerHTML = `<div class="nm"><span class="dot" style="background:${HEX[s]}"></span>${SEAT[s]} · ${role(s)}</div>
+      <div class="muted" style="font-size:12px">${aiName}${extra ? "<br>" + extra : ""}</div>${stat}`;
+    box.appendChild(d);
+  }
+}
+
+// 候选兵种的简短写法：唯一 → 兵种名；连续军衔 → “排长~司令”；少量 → “炸弹/地雷”；其余 → “N 种可能”
+function candText(c) {
+  if (!c || !c.length) return "?";
+  if (c.length === 1) return B.types[c[0]];
+  if (c.length >= 3 && c[0] >= 3 && c[c.length - 1] - c[0] === c.length - 1) return `${B.types[c[0]]}~${B.types[c[c.length - 1]]}`;
+  if (c.length <= 3) return c.map(t => B.types[t]).join("/");
+  return `${c.length} 种可能`;
+}
+const pieceText = (c, seat) => seat === human || (c && c.length === 1) ? B.types[c[0]] : "暗子";
+
+function renderLog() {
+  if (aliveBefore) for (let s = 0; s < 4; s++) if (aliveBefore[s] && !S.alive[s]) eliminated.push({ ply: S.ply, seat: s });
+  aliveBefore = S.alive.slice();
+  const cur = viewIdx();
+  const rows = S.events.map(e => {
+    const who = e.seat === human ? "你" : SEAT[e.seat];
+    const mover = e.mover ? pieceText(e.mover, e.seat) : "";
+    const target = e.target ? `（${pieceText(e.target, e.target_seat)}）` : "";
+    const loss = (e.dmat || []).map((d, s) => d <= -0.05 ? `${SEAT[s]} ${d.toFixed(1)}` : "").filter(Boolean).join("，");
+    // 推断：只列这一步碰到的子和已经收窄到 3 种以内的子，其余（编制约束带动的小幅收窄）只计数
+    const nar = e.narrowed || [];
+    const shown = nar.filter(n => n.node === e.to || n.cand.length <= 3);
+    const rest = nar.length - shown.length;
+    const narText = (n) => n.cand.length > 3 && n.gone && n.gone.length && n.gone.length <= 3
+      ? `排除 ${n.gone.map(t => B.types[t]).join("/")}（剩 ${candText(n.cand)}）` : candText(n.cand);
+    const subs = shown.map(n => `<div class="sub">推断：${SEAT[n.seat]} ${nodeName(n.node)} → ${narText(n)}</div>`).join("") +
+      (rest ? `<div class="sub">另有 ${rest} 颗暗子候选缩小</div>` : "");
+    // 模型标签：别家这步是否被预测到；你这步是 AI 的第几选择；你走后胜率大幅变化标好棋 / 失误
+    const tags = [];
+    if (e.rank_kind === "predict") tags.push(e.rank ? `<span class="tag">预测命中 #${e.rank}</span>` : `<span class="tag">预测外</span>`);
+    if (e.rank_kind === "suggest") tags.push(`<span class="tag">${e.rank === 1 ? "AI 首选" : e.rank ? `AI 第 ${e.rank} 选` : "非 AI 前三"}</span>`);
+    if (e.dwin !== undefined && Math.abs(e.dwin) >= 0.005) {
+      const big = e.seat === human && Math.abs(e.dwin) >= SWING;
+      tags.push(`<span class="tag${big ? (e.dwin > 0 ? " good" : " bad") : ""}">${big ? (e.dwin > 0 ? "好棋 " : "失误 ") : ""}胜率 ${e.dwin > 0 ? "+" : ""}${(e.dwin * 100).toFixed(1)}%</span>`);
+    }
+    return { ply: e.ply, html: `<div class="ev ${e.outcome}${e.i === cur ? " cur" : ""}" data-i="${e.i ?? ""}">` +
+      `<span class="dot" style="background:${HEX[e.seat]}"></span>${e.ply}. ${who}：${mover} ${nodeName(e.from)} → ${nodeName(e.to)}${target} ${OUT[e.outcome]}` +
+      (loss ? ` <span class="dm">子力 ${loss}</span>` : "") + tags.join("") + subs + `</div>` };
+  });
+  for (const x of eliminated) rows.push({ ply: x.ply + 0.5, html: `<div class="killed">—— ${SEAT[x.seat]}（${role(x.seat)}）出局 ——</div>` });
+  rows.sort((a, b) => b.ply - a.ply);
+  $("log").innerHTML = rows.map(r => r.html).join("") +
+    (S.origin === "position" ? '<div class="muted">—— 从自摆局面开始 ——</div>' : "");
+  for (const d of $("log").querySelectorAll("div.ev[data-i]")) if (d.dataset.i !== "") d.onclick = () => seek(+d.dataset.i);
+}
+
+// ---------------- 局势分析曲线
+const CW = 332, CH = 150, CL = 30, CR = 8, CT = 8, CB = 26;
+const cx = (i) => CL + (TL.length > 1 ? i / (TL.length - 1) : 0) * (CW - CL - CR);
+const hasModel = () => TL.some(t => t.wdl);
+const winOf = (t) => (t.wdl ? t.wdl[0] * 100 : null);
+
+// 当前曲线的各条线：胜率只有你方一条；子力四家；未知度只看另外三家
+function series() {
+  if (chartKey === "win") return [{ color: HEX[human], label: `你方胜率（${SEAT[human]}+${SEAT[(human + 2) % 4]}）`, get: winOf }];
+  const seats = chartKey === "ent" ? [0, 1, 2, 3].filter(s => s !== human) : [0, 1, 2, 3];
+  return seats.map(s => ({ s, color: HEX[s], label: `${SEAT[s]}·${role(s).replace("（队友）", "")}`, get: (t) => t[chartKey][s] }));
+}
+
+function chartMax() {
+  if (chartKey === "win") return 100;
+  if (chartKey === "mat") return 88;
+  let m = 10;
+  for (const t of TL) for (const sr of series()) m = Math.max(m, sr.get(t));
+  return Math.ceil(m / 20) * 20;
+}
+
+// 你走的一步让胜率变化超过 6 个百分点：标成好棋 / 失误
+const SWING = 0.06;
+function swingAt(i) {
+  const t = TL[i], p = TL[i - 1];
+  if (!t || !p || !t.ev || t.ev[0] !== human || !t.wdl || !p.wdl) return 0;
+  const d = t.wdl[0] - p.wdl[0];
+  return Math.abs(d) >= SWING ? d : 0;
+}
+
+function initChart() {
+  const c = $("chart");
+  c.setAttribute("viewBox", `0 0 ${CW} ${CH}`);
+  const at = (ev) => {
+    const r = c.getBoundingClientRect();
+    const x = (ev.clientX - r.left) * CW / r.width;
+    return Math.max(0, Math.min(TL.length - 1, Math.round((x - CL) / (CW - CL - CR) * (TL.length - 1))));
+  };
+  c.addEventListener("mousemove", (ev) => { if (TL.length) showTip(at(ev)); });
+  c.addEventListener("mouseleave", () => { $("ctip").hidden = true; renderAnalysis(); });
+  c.addEventListener("click", (ev) => { if (TL.length) seek(at(ev)); });
+}
+
+function renderAnalysis(hover = -1) {
+  const model = hasModel();
+  $("chartTabs").querySelector('[data-k="win"]').style.display = model ? "" : "none";
+  if (!model && chartKey === "win" && TL.length) chartKey = "mat";
+  for (const x of $("chartTabs").children) x.classList.toggle("on", x.dataset.k === chartKey);
+  const c = $("chart");
+  c.innerHTML = "";
+  $("legend").innerHTML = series().map(sr => `<span><span class="dot" style="background:${sr.color}"></span>${sr.label}</span>`).join("");
+  renderStats();
+  const n = TL.length;
+  const tl = $("tl");
+  tl.max = Math.max(0, n - 1); tl.value = viewIdx();
+  $("tlLive").disabled = !view;
+  if (!n) return;
+  const ymax = chartMax(), y = (v) => CT + (1 - v / ymax) * (CH - CT - CB);
+  const mk = (tag, attrs) => el(tag, attrs, c);
+  for (const v of [0, ymax / 2, ymax]) {
+    mk("line", { x1: CL, x2: CW - CR, y1: y(v), y2: y(v), class: "chart-grid", "stroke-dasharray": chartKey === "win" && v === 50 ? "4 3" : "" });
+    mk("text", { x: CL - 4, y: y(v), class: "chart-axis", "text-anchor": "end", "dominant-baseline": "central" }).textContent = chartKey === "win" ? v + "%" : v;
+  }
+  mk("text", { x: CL, y: CH - 4, class: "chart-axis" }).textContent = TL[0].ply;
+  mk("text", { x: CW - CR, y: CH - 4, class: "chart-axis", "text-anchor": "end" }).textContent = `第 ${TL[n - 1].ply} 步`;
+  // 碰子标记：横轴下方一排短竖线，颜色是进攻方，夺旗更长
+  TL.forEach((t, i) => {
+    if (!t.ev || t.ev[1] === "move") return;
+    const flag = t.ev[1] === "capture_flag";
+    mk("line", { x1: cx(i), x2: cx(i), y1: CH - CB + 3, y2: CH - CB + (flag ? 13 : 8), stroke: HEX[t.ev[0]], "stroke-width": flag ? 2.5 : 1.5 });
+  });
+  for (const sr of series()) {
+    const pts = [];
+    TL.forEach((t, i) => { const v = sr.get(t); if (v !== null && v !== undefined) pts.push(`${cx(i).toFixed(1)},${y(v).toFixed(1)}`); });
+    mk("polyline", { points: pts.join(" "), class: "chart-line", stroke: sr.color });
+  }
+  if (chartKey === "win") TL.forEach((t, i) => {
+    const d = swingAt(i);
+    if (d) mk("circle", { cx: cx(i), cy: y(winOf(t)), r: 4, fill: d > 0 ? "#15803d" : "#b91c1c", stroke: "#fffdf8", "stroke-width": 2 });
+  });
+  const mark = (i, dash) => mk("line", { x1: cx(i), x2: cx(i), y1: CT, y2: CH - CB, stroke: "#2b2620", "stroke-width": 1, "stroke-dasharray": dash, opacity: .6 });
+  if (view) mark(view.i, "3 3");
+  if (hover >= 0) {
+    mark(hover, "");
+    for (const sr of series()) {
+      const v = sr.get(TL[hover]);
+      if (v !== null && v !== undefined) mk("circle", { cx: cx(hover), cy: y(v), r: 4, fill: sr.color, stroke: "#fffdf8", "stroke-width": 2 });
+    }
+  }
+}
+
+function showTip(i) {
+  renderAnalysis(i);
+  const t = TL[i], tip = $("ctip");
+  const what = t.ev ? `${SEAT[t.ev[0]]} ${(OUT[t.ev[1]] || "走子").replace("· ", "")}` : "开局";
+  let body;
+  if (chartKey === "win") {
+    const d = swingAt(i);
+    body = t.wdl ? `<div>胜 ${(t.wdl[0] * 100).toFixed(1)}% · 和 ${(t.wdl[1] * 100).toFixed(1)}% · 负 ${(t.wdl[2] * 100).toFixed(1)}%</div>` +
+      (d ? `<div style="color:${d > 0 ? "#15803d" : "#b91c1c"}">${d > 0 ? "好棋" : "失误"}：胜率 ${d > 0 ? "+" : ""}${(d * 100).toFixed(1)}%</div>` : "") : "<div>无模型数据</div>";
+  } else {
+    const unit = chartKey === "mat" ? "" : " bit";
+    body = series().map(sr => `<div><span class="dot" style="background:${sr.color}"></span>${SEAT[sr.s]} ${sr.get(t).toFixed(1)}${unit}</div>`).join("");
+  }
+  tip.innerHTML = `<b>第 ${t.ply} 步</b> <span class="muted">${what}</span>` + body;
+  tip.hidden = false;
+  const r = $("chart").getBoundingClientRect(), px = cx(i) * r.width / CW;
+  tip.style.top = "4px";
+  const left = px > r.width / 2 ? px - tip.offsetWidth - 10 : px + 10;
+  tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, left)) + "px";
+}
+
+// 本局 AI 表现：走法预测命中、你与 AI 首选的一致度；终局后读子准确率（神经信念 vs 规则估计）
+function renderStats() {
+  const st = S && S.stats, box = $("anaStats");
+  if (!st || !hasModel()) { box.innerHTML = ""; return; }
+  const pct = (a, b) => (b ? Math.round(a / b * 100) + "%" : "—");
+  const parts = [];
+  if (st.pred_n) parts.push(`走法预测命中 <b>${pct(st.pred_top1, st.pred_n)}</b>（前三 ${pct(st.pred_top3, st.pred_n)}，共 ${st.pred_n} 步）`);
+  if (st.agree_n) parts.push(`你与 AI 首选一致 <b>${pct(st.agree_top1, st.agree_n)}</b>（${st.agree_top1}/${st.agree_n}）`);
+  if (st.read_model != null) parts.push(`本局读子准确率：神经网络 <b>${Math.round(st.read_model * 100)}%</b>，规则估计 ${Math.round(st.read_rule * 100)}%`);
+  box.innerHTML = parts.join("<br>");
+}
+
+// ---------------- 棋盘四角的各家面板
+// 每家占自己“左手边”那个角：你 左下、上家 左上、对家 右上、下家 右下（棋盘坐标里四角各约 6.2×6.2 格）
+const CORNER_XY = [[-1.3, 11.1], [11.1, 11.1], [11.1, -1.3], [-1.3, -1.3]];  // 按相对座位 rel = 0..3
+const GRID_TYPES = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];  // 司 军 师 旅 / 团 营 连 排 / 兵 弹 雷 旗
+const KEY_TYPES = new Set([11, 10, 2, 0]);
+
+function renderCorners() {
+  const wrap = $("boardwrap");
+  for (const c of wrap.querySelectorAll(".corner")) c.remove();
+  if (mode === "review") return rvCorners(wrap);
+  if (mode !== "play" || !S || !TL.length) return;
+  const idx = viewIdx(), t = TL[idx];
+  const exp = (view ? view.exp : S.exp) || null;
+  for (let s = 0; s < 4; s++) {
+    const [x, y] = CORNER_XY[rel(s)];
+    const d = document.createElement("div");
+    d.className = "corner" + (t.pieces[s] === 0 ? " dead" : "");
+    Object.assign(d.style, { left: `${(x + 1.5) * 5}%`, top: `${(y + 1.5) * 5}%`, width: "31%", height: "31%" });
+    d.innerHTML = cornerHtml(s, idx, t, exp);
+    wrap.appendChild(d);
+  }
+}
+
+function cornerHtml(s, idx, t, exp) {
+  const mine = s === human, col = HEX[s];
+  const kind = mine ? "人类" : (B.ai_kinds.find(k => k.id === S.ai[s]) || {}).name || "";
+  let h = `<div class="c-head"><span class="dot" style="background:${col}"></span>${SEAT[s]} · ${role(s)}<span class="c-sub">${t.pieces[s] ? kind : "已出局"}</span></div>`;
+  h += `<div class="c-mat"><span class="muted">子力</span><b>${t.mat[s].toFixed(1)}</b><span class="c-meta">${t.pieces[s]} 子` +
+       (t.hidden[s] ? ` · 暗 ${t.hidden[s]} · 未知 ${t.ent[s].toFixed(0)} bit` : "") + `</span></div>`;
+  h += `<div class="c-bar"><i style="width:${Math.min(100, t.mat[s] / 88 * 100)}%;background:${col}"></i></div>`;
+  // 小曲线：你这角画你方胜率（有模型时），其他三家画子力
+  const win = mine && TL.some(x => x.wdl);
+  const vals = TL.slice(0, idx + 1).map(x => (win ? (x.wdl ? x.wdl[0] * 100 : null) : x.mat[s]));
+  const ymax = win ? 100 : 88, n = Math.max(1, TL.length - 1);
+  const pts = vals.map((v, i) => (v == null ? null : `${(i / n * 100).toFixed(1)},${(22 - v / ymax * 20).toFixed(1)}`)).filter(Boolean).join(" ");
+  h += `<svg class="c-spark" viewBox="0 0 100 24" preserveAspectRatio="none">` +
+       (win ? `<line x1="0" x2="100" y1="12" y2="12" stroke="#e4d6ba" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/>` : "") +
+       `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+  // 兵力估计：每种子还剩几个（实心 = 已确认，浅色 = 暗子里按读子分布估计的部分）
+  if (exp && t.pieces[s]) {
+    const known = new Array(12).fill(0);
+    // 只数你这一方确认过的（终局时网页拿到全部真身，但兵力估计仍按你当时的视角）
+    for (const p of (view ? view.pieces : S.pieces)) if (p.owner === s && p.type !== undefined && (mine || (p.cand && p.cand.length === 1))) known[p.type]++;
+    h += `<div class="c-title">${mine ? "剩余兵力" : `兵力估计（${S.model ? "AI 读子" : "规则估计"}）`}</div><div class="c-grid">`;
+    for (const k of GRID_TYPES) {
+      const e = exp[s][k], q = QUOTA[k], kn = Math.min(known[k], e);
+      const txt = mine || Math.abs(e - Math.round(e)) < 0.05 ? String(Math.round(e)) : e.toFixed(1);
+      const zero = e < 0.05 ? " zero" : "";
+      const tip = `${B.types[k]}：已确认 ${known[k]} 个，${mine ? "" : `暗子里约 ${Math.max(0, e - known[k]).toFixed(1)} 个，`}编制 ${q}`;
+      h += `<div class="cc${zero}" title="${tip}"><span class="ct"><span${KEY_TYPES.has(k) ? ' style="font-weight:700"' : ""}>${SHORT[k]}</span><b>${txt}</b></span>` +
+           `<span class="cb"><i style="width:${kn / q * 100}%;background:${col}"></i><i style="width:${Math.max(0, e - kn) / q * 100}%;background:${col};opacity:.35"></i></span></div>`;
+    }
+    h += `</div>`;
+  }
+  // 底部：你 → 胜率与 AI 一致度；别家 → 预测命中与上一步
+  const st = S.stats || {};
+  if (mine) {
+    const w = t.wdl ? `你方胜率 ${Math.round(t.wdl[0] * 100)}%` : "";
+    const ag = st.agree_n ? `与 AI 首选一致 ${st.agree_top1}/${st.agree_n}` : "";
+    if (w || ag) h += `<div class="c-foot">${[w, ag].filter(Boolean).join(" · ")}</div>`;
+  } else {
+    const ps = st.pred_seat && st.pred_seat[s];
+    const last = S.events.filter(e => e.seat === s && e.i <= idx).pop();
+    const parts = [];
+    if (ps && ps[0]) parts.push(`预测命中 ${ps[1]}/${ps[0]}（前三 ${ps[2]}）`);
+    if (last) parts.push(`上步 ${nodeName(last.from)}→${nodeName(last.to)}${(OUT[last.outcome] || "").replace("· ", " ")}`);
+    if (parts.length) h += `<div class="c-foot">${parts.join("<br>")}</div>`;
+  }
+  return h;
+}
+
+// 复盘的四角：明棋的家显示真实子力曲线和每种子还剩几个；暗棋的家只显示子数
+function rvCorners(wrap) {
+  const R = RV.g;
+  if (!R) return;
+  const f = R.frames[RV.i], n = Math.max(1, R.frames.length - 1);
+  for (let s = 0; s < 4; s++) {
+    const [x, y] = CORNER_XY[rel(s)], col = HEX[s], open = RV.open[s];
+    const left = new Array(12).fill(0);
+    for (const [, t, o] of f.p) if (o === s) left[t]++;
+    const cnt = left.reduce((a, b) => a + b, 0);
+    let h = `<div class="c-head"><span class="dot" style="background:${col}"></span>${SEAT[s]} · ${role(s)}<span class="c-sub">${f.alive[s] ? R.names[s] : "已出局"}</span></div>`;
+    h += `<div class="c-mat"><span class="muted">子力</span><b>${open ? f.mat[s].toFixed(1) : "—"}</b><span class="c-meta">${cnt} 子 · ${open ? "明棋" : "暗棋"}</span></div>`;
+    if (open) {
+      h += `<div class="c-bar"><i style="width:${Math.min(100, f.mat[s] / 88 * 100)}%;background:${col}"></i></div>`;
+      const pts = R.frames.slice(0, RV.i + 1).map((q, i) => `${(i / n * 100).toFixed(1)},${(22 - q.mat[s] / 88 * 20).toFixed(1)}`).join(" ");
+      h += `<svg class="c-spark" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+      h += `<div class="c-title">剩余兵力</div><div class="c-grid">`;
+      for (const k of GRID_TYPES) {
+        h += `<div class="cc${left[k] ? "" : " zero"}" title="${B.types[k]}：还剩 ${left[k]} 个，编制 ${QUOTA[k]}"><span class="ct"><span${KEY_TYPES.has(k) ? ' style="font-weight:700"' : ""}>${SHORT[k]}</span><b>${left[k]}</b></span>` +
+             `<span class="cb"><i style="width:${left[k] / QUOTA[k] * 100}%;background:${col}"></i></span></div>`;
+      }
+      h += `</div>`;
+    }
+    const last = R.events.slice(0, RV.i).filter(e => e.seat === s).pop();
+    if (last) h += `<div class="c-foot">上步 ${nodeName(last.from)}→${nodeName(last.to)}${(OUT[last.outcome] || "").replace("· ", " ")}</div>`;
+    const d = document.createElement("div");
+    d.className = "corner" + (cnt === 0 ? " dead" : "");
+    Object.assign(d.style, { left: `${(x + 1.5) * 5}%`, top: `${(y + 1.5) * 5}%`, width: "31%", height: "31%" });
+    d.innerHTML = h;
+    wrap.appendChild(d);
+  }
+}
+
+// ---------------- 摆棋编辑
+function count(owner, type) {
+  let c = 0;
+  for (let n = 0; n < 129; n++) if (ed.owners[n] === owner && ed.types[n] === type) c++;
+  return c;
+}
+function renderEditorUi() {
+  for (const b of $("owners").children) b.classList.toggle("on", +b.dataset.owner === ed.owner);
+  for (const b of $("tools").children) b.classList.toggle("on", b.dataset.tool === ed.tool);
+  const pal = $("palette");
+  pal.innerHTML = "";
+  for (let t = 11; t >= 0; t--) {
+    const b = document.createElement("button");
+    b.style.background = HEX[ed.owner];
+    b.className = ed.tool === "place" && ed.type === t ? "on" : "";
+    b.innerHTML = `${B.types[t]} <small>${QUOTA[t] - count(ed.owner, t)}</small>`;
+    b.onclick = () => { ed.type = t; ed.tool = "place"; renderEditorUi(); };
+    pal.appendChild(b);
+  }
+}
+// 引擎按“军旗只在自家大本营、地雷只在自家后两排”初始化对暗子的推断，摆棋也必须遵守
+function posRule(n, owner, type) {
+  const d = B.nodes[n];
+  if (type === 0 && !(d.base && d.seat === owner)) return "军旗只能放在自家大本营";
+  if (type === 1 && !(d.seat === owner && d.row >= 4)) return "地雷只能放在自家后两排";
+  return "";
+}
+function clickEditor(n) {
+  say("");
+  if (ed.tool === "erase") {
+    ed.types[n] = ed.owners[n] = -1;
+  } else if (ed.tool === "move") {
+    if (ed.pick < 0) { if (ed.owners[n] >= 0) ed.pick = n; }
+    else {
+      const f = ed.pick;
+      ed.pick = -1;
+      const [t, o, t2, o2] = [ed.types[f], ed.owners[f], ed.types[n], ed.owners[n]];
+      const err = posRule(n, o, t) || (o2 >= 0 ? posRule(f, o2, t2) : "");
+      if (err) say(err);
+      else { ed.types[n] = t; ed.owners[n] = o; ed.types[f] = t2; ed.owners[f] = o2; }
+    }
+  } else if (ed.owners[n] === ed.owner && ed.types[n] === ed.type) {
+    ed.types[n] = ed.owners[n] = -1;
+  } else {
+    const err = posRule(n, ed.owner, ed.type) ||
+      (count(ed.owner, ed.type) >= QUOTA[ed.type] ? `${SEAT[ed.owner]}家的${B.types[ed.type]}已经放满了` : "");
+    if (err) say(err);
+    else { ed.types[n] = ed.type; ed.owners[n] = ed.owner; }
+  }
+  renderEditorUi(); draw();
+}
+function edValidate() {
+  const per = [0, 0, 0, 0];
+  for (let n = 0; n < 129; n++) if (ed.owners[n] >= 0) {
+    per[ed.owners[n]]++;
+    const err = posRule(n, ed.owners[n], ed.types[n]);
+    if (err) return `${nodeName(n)}：${err}`;
+  }
+  for (let o = 0; o < 4; o++) for (let t = 0; t < 12; t++) if (count(o, t) > QUOTA[t]) return `${SEAT[o]}家${B.types[t]}超过 ${QUOTA[t]} 颗`;
+  if (per[0] + per[2] === 0 || per[1] + per[3] === 0) return "两队都至少要有一颗子";
+  const first = +$("firstSel").value;
+  if (per[first] === 0) return `${SEAT[first]}家没有子，不能先走`;
+  return "";
+}
+async function edStart() {
+  const err = edValidate();
+  if (err) return say(err);
+  const st = await api("/api/load", { types: ed.types, owners: ed.owners, current: +$("firstSel").value, human, ai: aiChoice() });
+  if (st.error) return say(st.error);
+  startPlay(st);
+}
+async function edFill() {
+  ed.types.fill(-1); ed.owners.fill(-1);
+  for (let s = 0; s < 4; s++) {
+    const st = (await api("/api/setup")).setup;
+    st.forEach((t, i) => { if (t >= 0) { ed.types[s * 30 + i] = t; ed.owners[s * 30 + i] = s; } });
+  }
+  renderEditorUi(); draw();
+}
+async function fromGame() {
+  const snap = await api("/api/snapshot");
+  if (snap.error) return say(snap.error);
+  ed.types = snap.types; ed.owners = snap.owners;
+  $("firstSel").value = snap.current;
+  setMode("editor");
+  say("已读入当前对局的真实局面（含全部暗子）");
+}
+function edJson() {
+  const pieces = [];
+  for (let n = 0; n < 129; n++) if (ed.owners[n] >= 0) pieces.push([n, ed.owners[n], ed.types[n]]);
+  return JSON.stringify({ current: +$("firstSel").value, pieces });
+}
+function edExport() { $("edText").value = edJson(); $("edText").select(); say("已导出，可以复制保存"); }
+function edImport(text) {
+  try {
+    const d = JSON.parse(text);
+    const t = Array(129).fill(-1), o = Array(129).fill(-1);
+    for (const [n, ow, ty] of d.pieces) { t[n] = ty; o[n] = ow; }
+    ed.types = t; ed.owners = o;
+    $("firstSel").value = d.current ?? 0;
+    renderEditorUi(); draw(); say("已导入");
+  } catch (e) { say("JSON 格式不对：" + e.message); }
+}
+function slots() { try { return JSON.parse(localStorage.getItem("junqi.positions") || "{}"); } catch { return {}; } }
+function refreshSlots() {
+  const box = $("edSlots");
+  box.length = 1;
+  for (const k of Object.keys(slots())) box.add(new Option(k, k));
+}
+function edSave() {
+  const name = prompt("给这个局面起个名字", `局面 ${new Date().toLocaleString()}`);
+  if (!name) return;
+  const all = slots();
+  all[name] = edJson();
+  try { localStorage.setItem("junqi.positions", JSON.stringify(all)); } catch { return say("浏览器不允许保存，请用导出"); }
+  refreshSlots(); say(`已保存：${name}`);
+}
+
+// ---------------- 绘制
+function draw() {
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", "-1.5 -1.5 20 20");
+  const defs = el("defs");
+  const mk = el("marker", { id: "arrow", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 3, markerHeight: 3, orient: "auto-start-reverse" }, defs);
+  el("path", { d: "M0,0 L10,5 L0,10 z", fill: "context-stroke" }, mk);
+  for (let s = 0; s < 4; s++) {
+    const lg = el("linearGradient", { id: "pg" + s, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: "0", "stop-color": shade(HEX[s], .22) }, lg);
+    el("stop", { offset: "1", "stop-color": shade(HEX[s], -.1) }, lg);
+  }
+
+  for (let s = 0; s < 4; s++) {  // 营区标签
+    const base = B.nodes.find(d => d.seat === s && d.row === 5 && d.col === 2);
+    const [x, y] = pos(base.id);
+    const t = el("text", { class: "clabel" });
+    t.style.fill = HEX[s];
+    t.textContent = `${SEAT[s]}·${role(s).replace("（队友）", "")}`;
+    if (Math.abs(x - 8) > Math.abs(y - 8)) {
+      const lx = x + Math.sign(x - 8) * 0.95;
+      t.setAttribute("x", lx); t.setAttribute("y", y); t.setAttribute("transform", `rotate(${x > 8 ? 90 : -90} ${lx} ${y})`);
+    } else { t.setAttribute("x", x); t.setAttribute("y", y + Math.sign(y - 8) * 0.8); }
+  }
+  for (const [a, b, k] of B.edges) {  // 连线
+    const [x1, y1] = pos(a), [x2, y2] = pos(b);
+    const d = `M${x1},${y1} ${seg(a, b).d}`;  // 相邻两家之间是弧线
+    if (k === 2) { el("path", { d, class: "rail" }); el("path", { d, class: "rail2" }); }
+    else el("path", { d, class: "road" });
+  }
+  for (const n of B.nodes) {  // 节点
+    const [x, y] = pos(n.id);
+    if (n.camp) el("circle", { cx: x, cy: y, r: 0.36, class: "node campn" });
+    else if (n.base) el("rect", { x: x - 0.44, y: y - 0.32, width: 0.88, height: 0.64, rx: 0.3, class: "node basen" });
+    else el("rect", { x: x - 0.4, y: y - 0.26, width: 0.8, height: 0.52, rx: 0.06, class: "node" });
+  }
+  if (mode === "setup") drawSetup();
+  else if (mode === "editor") drawEditor();
+  else if (mode === "review") drawReview();
+  else drawPlay();
+}
+
+// 颜色变亮（amt>0）或变暗（amt<0）
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = [n >> 16, (n >> 8) & 255, n & 255].map(c => Math.round(amt > 0 ? c + (255 - c) * amt : c * (1 + amt)));
+  return "#" + ch.map(c => c.toString(16).padStart(2, "0")).join("");
+}
+
+// 暗子不写字（不再显示“?”），有标记时显示标记
+function drawPiece(node, owner, label, cls, mark) {
+  const [x, y] = pos(node);
+  const g = el("g", { class: "piece " + cls, "data-node": node });
+  el("rect", { x: x - 0.4, y: y - 0.26, width: 0.8, height: 0.52, rx: 0.09, fill: `url(#pg${owner})`, class: "face" }, g);
+  el("rect", { x: x - 0.33, y: y - 0.215, width: 0.66, height: 0.11, rx: 0.055, class: "shine" }, g);
+  if (label) el("text", { x, y: y + 0.01 }, g).textContent = label;
+  else if (mark) el("text", { x, y: y + 0.01, class: "mark" }, g).textContent = mark;
+  return g;
+}
+
+function drawSetup() {
+  const all = $("editAll").checked;
+  for (let s = 0; s < 4; s++) {
+    const st = setups[s];
+    if (!st) continue;
+    const editable = s === human || all;
+    for (let i = 0; i < 30; i++) {
+      if (st[i] < 0) continue;
+      const g = drawPiece(s * 30 + i, s, editable ? B.types[st[i]] : "",
+        (editable ? "click" : "unknown") + (swapSel && swapSel[0] === s && swapSel[1] === i ? " sel" : ""));
+      if (editable) g.onclick = () => clickSetup(s, i);
+    }
+  }
+}
+
+function drawEditor() {
+  for (let n = 0; n < 129; n++) {
+    if (ed.owners[n] >= 0) drawPiece(n, ed.owners[n], B.types[ed.types[n]], n === ed.pick ? "sel" : "");
+    const [x, y] = pos(n);
+    const h = el("circle", { cx: x, cy: y, r: 0.42, class: "hit" });
+    el("title", {}, h).textContent = nodeName(n);
+    h.onclick = () => clickEditor(n);
+  }
+}
+
+// 概率最高的几种兵种，如“师长 26% · 旅长 24% · 团长 21%”
+function topTypes(prob, k = 4) {
+  return prob.map((q, t) => [q, t]).filter(([q]) => q >= 0.01).sort((a, b) => b[0] - a[0]).slice(0, k)
+    .map(([q, t]) => `${B.types[t]} ${Math.round(q * 100)}%`).join(" · ");
+}
+
+// 暗子叠加层：最可能身份 + 把握条，或者大子 / 雷旗概率的热度
+function drawGuess(g, p) {
+  const mode = $("overlay").value;
+  if (mode === "none") return;
+  const [x, y] = pos(p.node);
+  if (mode === "guess") {
+    let k = 0;
+    p.prob.forEach((q, t) => { if (q > p.prob[k]) k = t; });
+    const q = p.prob[k];
+    const t = el("text", { x, y: y - 0.02, class: "guess" }, g);
+    t.textContent = SHORT[k];
+    t.style.opacity = 0.55 + 0.45 * q;
+    el("rect", { x: x - 0.3, y: y + 0.15, width: 0.6 * q, height: 0.05, rx: 0.025, class: "conf" }, g);
+    return;
+  }
+  const q = mode === "big" ? p.prob[9] + p.prob[10] + p.prob[11] : p.prob[0] + p.prob[1];
+  el("rect", { x: x - 0.4, y: y - 0.26, width: 0.8, height: 0.52, rx: 0.09, class: "heat",
+               fill: mode === "big" ? "#f59e0b" : "#1f2937", opacity: 0.85 * Math.min(1, q) }, g);
+  el("text", { x, y: y + 0.01, class: "guess" }, g).textContent = Math.round(q * 100);
+}
+
+// 走法预测箭头：别家下一步（粗细和透明度随概率）；回看 / 终局时也画 AI 对你的建议
+function drawPredictions() {
+  if (!$("predOn").checked) return;
+  const moves = view ? view.moves : S.moves, seat = view ? view.move_seat : S.move_seat;
+  if (!moves || !moves.length || (seat === human && !view && !S.over)) return;
+  for (const m of moves) {
+    const [x1, y1] = pos(m.from), [x2, y2] = pos(m.to);
+    const len = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+    const line = el("line", { x1: x1 + ux * 0.2, y1: y1 + uy * 0.2, x2: x2 - ux * 0.22, y2: y2 - uy * 0.22, class: "predmove", stroke: HEX[seat] });
+    line.style.strokeWidth = 0.06 + 0.12 * m.p;
+    line.style.opacity = 0.4 + 0.55 * m.p;
+    if (m.p < 0.1) continue;  // 小概率的不写数字，免得挤在一起
+    const lbl = el("text", { x: (x1 + x2) / 2 - uy * 0.24, y: (y1 + y2) / 2 + ux * 0.24, class: "predlabel", fill: HEX[seat] });
+    lbl.textContent = Math.round(m.p * 100) + "%";
+  }
+}
+
+// 回看时用到那一步为止的标记
+function marksFor(ply) {
+  let best = -1;
+  for (const k of Object.keys(marksAt)) if (+k <= ply && +k > best) best = +k;
+  return best >= 0 ? marksAt[best] : {};
+}
+
+// 复盘：完整局面，明棋的家写兵种，暗棋的家只画背面（亮出的军旗照常写）
+function drawReview() {
+  const R = RV.g;
+  if (!R) return;
+  const i = RV.shown ?? RV.i, f = R.frames[i];
+  const recent = R.events.slice(Math.max(0, i - 4), i);
+  recent.forEach((e, i) => {
+    const p = el("path", { d: route(pathOf(e)).d, class: "trail", stroke: HEX[e.seat] });
+    p.style.opacity = 0.12 + 0.33 * (i + 1) / recent.length;
+  });
+  const last = recent[recent.length - 1];
+  if (last) {
+    const [x, y] = pos(last.from);
+    el("rect", { x: x - 0.45, y: y - 0.31, width: 0.9, height: 0.62, rx: 0.12, class: "fromring" });
+  }
+  for (const [n, t, o] of f.p) {
+    const open = RV.open[o] || (t === 0 && f.flag[o]);
+    const g = drawPiece(n, o, open ? B.types[t] : "", last && n === last.to ? "last" : "");
+    el("title", {}, g).textContent = `${SEAT[o]}（${role(o)}）${open ? B.types[t] : "暗子"} · ${nodeName(n)}`;
+  }
+}
+
+function drawPlay() {
+  // 回看：画那一帧（只含你当时能看到的信息），不能点、不能标记
+  const pieces = view ? view.pieces : S.pieces;
+  const live = !view && !S.over;
+  const revealed = !view && S.over;
+  const curMarks = view ? marksFor(view.ply) : marks;
+  // 最近几步：沿实际路线的细线（越近越清楚），最后一步再标出发点
+  const recent = (view ? view.events : S.events).slice(-4);
+  recent.forEach((e, i) => {
+    const p = el("path", { d: route(pathOf(e)).d, class: "trail", stroke: HEX[e.seat] });
+    p.style.opacity = 0.12 + 0.33 * (i + 1) / recent.length;
+  });
+  const last = recent[recent.length - 1];
+  if (last) {
+    const [x, y] = pos(last.from);
+    el("rect", { x: x - 0.45, y: y - 0.31, width: 0.9, height: 0.62, rx: 0.12, class: "fromring" });
+  }
+  const legal = view ? {} : S.legal || {};
+  for (const p of pieces) {
+    const mine = p.owner === human;
+    const known = p.type !== undefined;
+    let label = "", cls = "unknown", mark = null;
+    if (known) { label = B.types[p.type]; cls = !mine && !revealed ? "inferred" : ""; }
+    else if (p.true !== undefined) { label = B.types[p.true]; cls = "god"; }
+    else mark = curMarks[p.node];
+    if (mine && legal[p.node]) cls += " click";
+    if (!mine && !known && live) cls += " markable";
+    if (p.node === sel) cls += " sel";
+    if (last && p.node === last.to) cls += " last";
+    const g = drawPiece(p.node, p.owner, label, cls, mark);
+    if (!label && !mark && p.prob) drawGuess(g, p);
+    el("title", {}, g).textContent = mine || revealed ? `${SEAT[p.owner]} ${B.types[p.type]}` :
+      `${SEAT[p.owner]}（${role(p.owner)}）可能是：${(p.cand || []).map(t => B.types[t]).join("、")}` +
+      (p.prob && !known ? `\n${S.model ? "AI 读子" : "规则估计"}：${topTypes(p.prob)}` : "") +
+      (curMarks[p.node] ? `\n你的标记：${curMarks[p.node]}` : "") + (known || !live ? "" : "\n右键做标记");
+    if (mine && legal[p.node]) g.onclick = () => { if (!busy) { sel = sel === p.node ? -1 : p.node; draw(); } };
+    if (!mine && !known && live) g.oncontextmenu = (ev) => { ev.preventDefault(); openMarkMenu(ev, p.node); };
+  }
+  drawPredictions();
+  if (hintMv && !view) {
+    const [x1, y1] = pos(hintMv.from), [x2, y2] = pos(hintMv.to);
+    el("line", { x1, y1, x2, y2, class: "hintmove", stroke: "#f59e0b" });
+  }
+  if (sel >= 0 && legal[sel]) {
+    const occ = new Set(S.pieces.map(p => p.node));
+    for (const t of legal[sel]) {
+      const [x, y] = pos(t);
+      el("circle", { cx: x, cy: y, r: occ.has(t) ? 0.42 : 0.2, class: "target" + (occ.has(t) ? " attack" : "") }).onclick = () => move(sel, t);
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

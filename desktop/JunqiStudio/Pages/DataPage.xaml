@@ -1,0 +1,55 @@
+<UserControl x:Class="JunqiStudio.Pages.DataPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="40,32,40,24">
+      <TextBlock Text="数据" Style="{StaticResource H1}"/>
+      <TextBlock Style="{StaticResource Sub}" Margin="0,8,0,24" Text="规则 AI 自对弈产生的棋谱（.jqr），是预训练的教材。每局约 150 字节 + 每步 2 字节，可完整复盘。"/>
+
+      <Border Style="{StaticResource CardBox}">
+        <StackPanel>
+          <Grid Margin="0,0,0,12">
+            <TextBlock Text="已有数据" Style="{StaticResource H2}"/>
+            <Button HorizontalAlignment="Right" Style="{StaticResource BtnSmall}" Content="打开 data 目录" Click="OpenData_Click"/>
+          </Grid>
+          <DataGrid x:Name="Grid">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="目录" Binding="{Binding RelPath}" Width="2*"/>
+              <DataGridTextColumn Header="规则" Binding="{Binding RulesText}" Width="*"/>
+              <DataGridTextColumn Header="局数" Binding="{Binding GamesText}" Width="*"/>
+              <DataGridTextColumn Header="总步数" Binding="{Binding PliesText}" Width="*"/>
+              <DataGridTextColumn Header="分片" Binding="{Binding Shards}" Width="0.7*"/>
+              <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="*"/>
+              <DataGridTextColumn Header="生成时间" Binding="{Binding Created}" Width="1.4*"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource CardBox}">
+        <StackPanel>
+          <TextBlock Text="产新数据" Style="{StaticResource H2}"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,14" FontSize="13" TextWrapping="Wrap"
+                     Text="用 CPU 多线程自对弈，9950X 上 20 万局约 1–2 分钟。每批务必用不同的随机种子，否则会产出和已有数据一模一样的棋局。"/>
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="1.3*"/><ColumnDefinition Width="14"/><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition Width="0.7*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="规则" Style="{StaticResource Sub}" Margin="0,0,0,6"/>
+              <ComboBox x:Name="RulesBox" SelectionChanged="Form_Changed">
+                <ComboBoxItem Content="四国暗棋（四人）" Tag="siguo_standard" IsSelected="True"/>
+                <ComboBoxItem Content="二人模式" Tag="duel"/>
+              </ComboBox></StackPanel>
+            <StackPanel Grid.Column="2"><TextBlock Text="局数" Style="{StaticResource Sub}" Margin="0,0,0,6"/><TextBox x:Name="GamesBox" Text="100000"/></StackPanel>
+            <StackPanel Grid.Column="4"><TextBlock Text="随机种子" Style="{StaticResource Sub}" Margin="0,0,0,6"/><TextBox x:Name="SeedBox" TextChanged="Form_Changed"/></StackPanel>
+            <StackPanel Grid.Column="6"><TextBlock Text="输出目录" Style="{StaticResource Sub}" Margin="0,0,0,6"/><TextBox x:Name="OutBox"/></StackPanel>
+          </Grid>
+          <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+            <Button Style="{StaticResource BtnPrimary}" Margin="0" Click="Gen_Click">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="White"/><TextBlock Text="开始产数据" Foreground="White"/></StackPanel>
+            </Button>
+            <TextBlock x:Name="GenError" Foreground="{StaticResource Red}" VerticalAlignment="Center" Margin="16,0,0,0" FontSize="13"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

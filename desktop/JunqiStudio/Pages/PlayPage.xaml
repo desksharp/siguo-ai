@@ -1,0 +1,46 @@
+<UserControl x:Class="JunqiStudio.Pages.PlayPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
+  <DockPanel Margin="32,28,32,24">
+    <Border DockPanel.Dock="Top" Style="{StaticResource CardBox}" Padding="20,14">
+      <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="人机对弈" Style="{StaticResource H2}"/>
+          <Border x:Name="Badge" Style="{StaticResource Badge}"><TextBlock x:Name="BadgeText" Style="{StaticResource BadgeText}" Text="已停止"/></Border>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="28,0,0,0" VerticalAlignment="Center">
+          <TextBlock Text="神经网络模型" Style="{StaticResource Sub}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <ComboBox x:Name="ModelBox" Width="330" DisplayMemberPath="Label"/>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal">
+          <Button x:Name="StartBtn" Style="{StaticResource BtnPrimary}" Click="Start_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock x:Name="StartIcon" Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="White"/><TextBlock x:Name="StartText" Text="启动" Foreground="White"/></StackPanel>
+          </Button>
+          <Button x:Name="StopBtn" Style="{StaticResource BtnOutline}" Click="Stop_Click">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0"/><TextBlock Text="停止"/></StackPanel>
+          </Button>
+          <Button Style="{StaticResource BtnOutline}" Click="Reload_Click" ToolTip="重新载入页面">
+            <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,2,0,0"/>
+          </Button>
+          <Button Style="{StaticResource BtnOutline}" Click="Browser_Click" ToolTip="在浏览器里打开">
+            <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" Margin="0,2,0,0"/>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Background="White" CornerRadius="16" BorderBrush="{StaticResource Border}" BorderThickness="1" ClipToBounds="True">
+      <Grid>
+        <wv2:WebView2 x:Name="Web" Visibility="Collapsed"/>
+        <StackPanel x:Name="Placeholder" VerticalAlignment="Center" HorizontalAlignment="Center">
+          <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="56" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/>
+          <TextBlock x:Name="PlaceholderText" Text="对弈服务还没启动" Style="{StaticResource H2}" Margin="0,16,0,0" HorizontalAlignment="Center"/>
+          <TextBlock Style="{StaticResource Sub}" Margin="0,8,0,0" HorizontalAlignment="Center" TextAlignment="Center"
+                     Text="选一个模型后点“启动”。你执一家，另外三家可以分别选神经网络、规则 AI 或随机。&#x0a;下棋用 CPU 推理，不影响正在进行的训练。"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+  </DockPanel>
+</UserControl>

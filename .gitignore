@@ -1,0 +1,10 @@
+build/
+junqi/_lib/
+data/
+runs/
+.venv/
+__pycache__/
+*.pyc
+desktop/*/bin/
+desktop/*/obj/
+games/

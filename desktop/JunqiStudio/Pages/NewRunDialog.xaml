@@ -1,0 +1,187 @@
+<Window x:Class="JunqiStudio.Pages.NewRunDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="新建训练" Width="820" Height="860" WindowStartupLocation="CenterOwner" Icon="/app.ico" ResizeMode="CanResize"
+        Background="{StaticResource Bg}" FontFamily="{StaticResource UiFont}" TextOptions.TextFormattingMode="Display">
+  <Window.Resources>
+    <Style x:Key="PresetCard" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="GroupName" Value="preset"/>
+      <Setter Property="Margin" Value="0,0,10,0"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="bd" CornerRadius="12" BorderThickness="2" BorderBrush="{StaticResource Border}" Background="White" Padding="14,12">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="#CFCBF8"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Primary}"/>
+                <Setter TargetName="bd" Property="Background" Value="#FBFAFF"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Label" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource Text2}"/>
+      <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+  </Window.Resources>
+
+  <DockPanel>
+    <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="28,14">
+      <Grid>
+        <TextBlock x:Name="ErrorText" Foreground="{StaticResource Red}" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" Margin="0,0,260,0"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button Content="取消" Style="{StaticResource BtnOutline}" IsCancel="True"/>
+          <Button Style="{StaticResource BtnPrimary}" Click="Start_Click" IsDefault="True">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,2,8,0" Foreground="White"/><TextBlock Text="开始训练" Foreground="White"/></StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <StackPanel Margin="28,24,28,8">
+        <TextBlock Text="新建训练" Style="{StaticResource H1}"/>
+        <TextBlock x:Name="SubText" Style="{StaticResource Sub}" Margin="0,6,0,20" TextWrapping="Wrap"/>
+
+        <UniformGrid Rows="1" Margin="0,0,0,16">
+          <RadioButton x:Name="ModeBc" Style="{StaticResource PresetCard}" GroupName="mode" Checked="Mode_Changed" IsChecked="True">
+            <StackPanel><TextBlock Text="预训练（行为克隆）" FontWeight="Bold" FontSize="15"/><TextBlock Text="在自对弈棋谱上模仿规则 AI，从零训练一个新模型" Style="{StaticResource Sub}" Margin="0,4,0,0" TextWrapping="Wrap"/></StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="ModeRl" Style="{StaticResource PresetCard}" GroupName="mode" Checked="Mode_Changed" Margin="0">
+            <StackPanel><TextBlock Text="强化学习（自对弈）" FontWeight="Bold" FontSize="15"/><TextBlock Text="从已训练好的模型出发，自己和自己下、按输赢改进" Style="{StaticResource Sub}" Margin="0,4,0,0" TextWrapping="Wrap"/></StackPanel>
+          </RadioButton>
+        </UniformGrid>
+
+        <Border Style="{StaticResource CardBox}">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="名称（也是 runs 下的目录名）" Style="{StaticResource Label}"/>
+              <TextBox x:Name="NameBox" TextChanged="Any_Changed"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="规则" Style="{StaticResource Label}"/>
+              <ComboBox x:Name="RulesBox" SelectionChanged="Rules_Changed">
+                <ComboBoxItem Content="四国暗棋（四人）" Tag="siguo_standard" IsSelected="True"/>
+                <ComboBoxItem Content="二人模式" Tag="duel"/>
+              </ComboBox>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <StackPanel x:Name="BcPanel">
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Text="模型大小" Style="{StaticResource H3}" Margin="0,0,0,12"/>
+            <UniformGrid Rows="1">
+              <RadioButton x:Name="PSmall" Style="{StaticResource PresetCard}" Checked="Any_Changed">
+                <StackPanel><TextBlock Text="小" FontWeight="Bold" FontSize="15"/><TextBlock Text="0.87M 参数" Style="{StaticResource Sub}" Margin="0,4,0,0"/><TextBlock Text="d128 · L4 · H4" Style="{StaticResource Hint}"/></StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="PMedium" Style="{StaticResource PresetCard}" Checked="Any_Changed" IsChecked="True">
+                <StackPanel><TextBlock Text="中（推荐）" FontWeight="Bold" FontSize="15"/><TextBlock Text="2.82M 参数" Style="{StaticResource Sub}" Margin="0,4,0,0"/><TextBlock Text="d192 · L6 · H6" Style="{StaticResource Hint}"/></StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="PLarge" Style="{StaticResource PresetCard}" Checked="Any_Changed">
+                <StackPanel><TextBlock Text="大" FontWeight="Bold" FontSize="15"/><TextBlock Text="6.57M 参数" Style="{StaticResource Sub}" Margin="0,4,0,0"/><TextBlock Text="d256 · L8 · H8" Style="{StaticResource Hint}"/></StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="PCustom" Style="{StaticResource PresetCard}" Checked="Any_Changed" Margin="0">
+                <StackPanel><TextBlock Text="自定义" FontWeight="Bold" FontSize="15"/><TextBlock Text="自己填维度" Style="{StaticResource Sub}" Margin="0,4,0,0"/><TextBlock Text="d 需能被 H 整除" Style="{StaticResource Hint}"/></StackPanel>
+              </RadioButton>
+            </UniformGrid>
+            <Grid x:Name="CustomPanel" Margin="0,14,0,0" Visibility="Collapsed">
+              <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/></Grid.ColumnDefinitions>
+              <StackPanel><TextBlock Text="维度 d-model" Style="{StaticResource Label}"/><TextBox x:Name="DBox" Text="192" TextChanged="Any_Changed"/></StackPanel>
+              <StackPanel Grid.Column="2"><TextBlock Text="层数 layers" Style="{StaticResource Label}"/><TextBox x:Name="LBox" Text="6" TextChanged="Any_Changed"/></StackPanel>
+              <StackPanel Grid.Column="4"><TextBlock Text="注意力头 heads" Style="{StaticResource Label}"/><TextBox x:Name="HBox" Text="6" TextChanged="Any_Changed"/></StackPanel>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Text="训练数据" Style="{StaticResource H3}"/>
+            <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,10" FontSize="13" Text="可多选。所选数据的最后一个分片留作评估，不参与训练；总分片数至少要 2 个。"/>
+            <StackPanel x:Name="DataList"/>
+            <TextBlock x:Name="NoData" Style="{StaticResource Sub}" Visibility="Collapsed" Text="没有这种规则的数据。先到“数据”页产一批。"/>
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource CardBox}">
+          <StackPanel>
+            <TextBlock Text="训练参数" Style="{StaticResource H3}" Margin="0,0,0,12"/>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/></Grid.ColumnDefinitions>
+              <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="14"/><RowDefinition/></Grid.RowDefinitions>
+              <StackPanel><TextBlock Text="训练步数" Style="{StaticResource Label}"/><TextBox x:Name="StepsBox" Text="12000" TextChanged="Any_Changed"/></StackPanel>
+              <StackPanel Grid.Column="2"><TextBlock Text="每步样本数 batch" Style="{StaticResource Label}"/>
+                <ComboBox x:Name="BatchBox" SelectionChanged="Any_Changed">
+                  <ComboBoxItem Content="256"/><ComboBoxItem Content="512"/><ComboBoxItem Content="1024" IsSelected="True"/><ComboBoxItem Content="2048"/>
+                </ComboBox></StackPanel>
+              <StackPanel Grid.Column="4"><TextBlock Text="学习率" Style="{StaticResource Label}"/><TextBox x:Name="LrBox" Text="6e-4" TextChanged="Any_Changed"/></StackPanel>
+              <StackPanel Grid.Row="2"><TextBlock Text="精度" Style="{StaticResource Label}"/>
+                <ComboBox x:Name="AmpBox" SelectionChanged="Any_Changed">
+                  <ComboBoxItem Content="bf16（快约 1.7 倍）" Tag="bf16" IsSelected="True"/><ComboBoxItem Content="fp32" Tag="none"/>
+                </ComboBox></StackPanel>
+              <StackPanel Grid.Row="2" Grid.Column="2"><TextBlock Text="每隔多少步评估并存模型" Style="{StaticResource Label}"/><TextBox x:Name="EvalBox" Text="2000" TextChanged="Any_Changed"/></StackPanel>
+              <StackPanel Grid.Row="2" Grid.Column="4"><TextBlock Text="结束后每种对手下几局" Style="{StaticResource Label}"/><TextBox x:Name="GamesBox" Text="200" TextChanged="Any_Changed"/></StackPanel>
+            </Grid>
+          </StackPanel>
+        </Border>
+        </StackPanel>
+
+        <StackPanel x:Name="RlPanel" Visibility="Collapsed">
+          <Border Style="{StaticResource CardBox}">
+            <StackPanel>
+              <TextBlock Text="起点模型" Style="{StaticResource H3}"/>
+              <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,10" FontSize="13" TextWrapping="Wrap"
+                         Text="通常选对老师得分最高的预训练模型。起点模型也会一直留在对手池里，并用来约束新模型不要偏离太远。"/>
+              <ComboBox x:Name="InitBox" SelectionChanged="Any_Changed"/>
+              <TextBlock x:Name="NoInit" Style="{StaticResource Sub}" Visibility="Collapsed" Margin="0,8,0,0" Text="没有这种规则的已训练模型。先做一次预训练。"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource CardBox}">
+            <StackPanel>
+              <TextBlock Text="训练参数" Style="{StaticResource H3}" Margin="0,0,0,12"/>
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/><ColumnDefinition Width="14"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="14"/><RowDefinition/></Grid.RowDefinitions>
+                <StackPanel><TextBlock Text="轮数" Style="{StaticResource Label}"/><TextBox x:Name="ItersBox" Text="600" TextChanged="Any_Changed"/></StackPanel>
+                <StackPanel Grid.Column="2"><TextBlock Text="每轮样本数" Style="{StaticResource Label}"/>
+                  <ComboBox x:Name="SamplesBox" SelectionChanged="Any_Changed">
+                    <ComboBoxItem Content="16384"/><ComboBoxItem Content="32768" IsSelected="True"/><ComboBoxItem Content="65536"/>
+                  </ComboBox></StackPanel>
+                <StackPanel Grid.Column="4"><TextBlock Text="学习率" Style="{StaticResource Label}"/><TextBox x:Name="RlLrBox" Text="2e-5" TextChanged="Any_Changed"/></StackPanel>
+                <StackPanel Grid.Row="2"><TextBlock Text="精度" Style="{StaticResource Label}"/>
+                  <ComboBox x:Name="RlAmpBox" SelectionChanged="Any_Changed">
+                    <ComboBoxItem Content="bf16（快约 1.7 倍）" Tag="bf16" IsSelected="True"/><ComboBoxItem Content="fp32" Tag="none"/>
+                  </ComboBox></StackPanel>
+                <StackPanel Grid.Row="2" Grid.Column="2"><TextBlock Text="每隔几轮评估并存档" Style="{StaticResource Label}"/><TextBox x:Name="RlEvalBox" Text="15" TextChanged="Any_Changed"/></StackPanel>
+                <StackPanel Grid.Row="2" Grid.Column="4"><TextBlock Text="每次评估每种对手几局" Style="{StaticResource Label}"/><TextBox x:Name="RlGamesBox" Text="400" TextChanged="Any_Changed"/></StackPanel>
+              </Grid>
+              <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0" FontSize="13" TextWrapping="Wrap"
+                         Text="每轮先同时下 512 局棋采样，再更新模型。对手：一半是自己，四分之一是历史存档，四分之一是规则 AI。每次评估用贪心走法对规则 AI 和起点模型各下若干局，并存档；中途停了可以在训练页点“继续训练”从最近的存档接着跑。"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <Border Style="{StaticResource CardBox}" Background="#FBFAFF" BorderBrush="#DCD8FB">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource Primary}" Margin="0,2,10,0"/>
+              <TextBlock x:Name="EstimateText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+            <TextBlock x:Name="EstimateSub" Style="{StaticResource Hint}" Margin="28,6,0,0" FontSize="13" TextWrapping="Wrap"/>
+            <TextBlock x:Name="CmdText" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{StaticResource Text2}" Margin="28,12,0,0" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

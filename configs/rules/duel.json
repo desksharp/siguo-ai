@@ -1,0 +1,14 @@
+{
+  "name": "Duel",
+  "version": 1,
+  "description": "二人对战：南(0) vs 北(2)，使用同一块 129 点四国棋盘，东西两营为空。用于课程学习第一阶段，节点编码与四国完全一致。",
+  "mode": "duel",
+  "visibility": "dark",
+  "arc_mode": "side_rails",
+  "center_middle_rail": 1,
+  "remove_eliminated": 1,
+  "reveal_flag_on_marshal_death": 1,
+  "max_plies": 1000,
+  "camp_corner_straight": 0,
+  "max_plies_without_combat": 200
+}

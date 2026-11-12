@@ -1,0 +1,14 @@
+{
+  "name": "SiGuoStandard",
+  "version": 1,
+  "description": "四国军旗标准规则（暗棋）。弧线与中路铁路按主流平台规则校准，见 docs/RULES.md。",
+  "mode": "four",
+  "visibility": "dark",
+  "arc_mode": "side_rails",
+  "center_middle_rail": 1,
+  "remove_eliminated": 1,
+  "reveal_flag_on_marshal_death": 1,
+  "max_plies": 2000,
+  "camp_corner_straight": 0,
+  "max_plies_without_combat": 400
+}
