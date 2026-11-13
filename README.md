@@ -48,6 +48,22 @@ Technical write-up (Chinese): [docs/TECH_REPORT.md](docs/TECH_REPORT.md).
 - 来回拖棋（把刚走的子原路走回）在 v10–v14 间从 26% 涨到 45%，和棋率涨到 23%；加入 `--undo-penalty` 后降到 4%–6%，和棋率 1%–7%，棋力不降。
 - 专门训练的漏洞探测器对 rl_four_v10 只拿到 0.578，对 rl_four_v19 只拿到 0.528，没有发现大的可利用漏洞。
 
+## 训练曲线
+
+以下图都由 `scripts/plot_progress.py` 从训练日志生成，Windows 训练工作台里也能实时看到同样的曲线。
+
+**分代自对弈**：每代都赢上一代，但增幅逐代收窄；v16 起加入防拖棋惩罚后，来回拖棋从 45% 降到 4%–6%。
+
+![每代对上一代的得分与棋风](docs/img/generations.png)
+
+**一代强化学习的内部曲线**（rl_four_v19，从 v18 继续 200 轮）：对规则 AI 稳定在 0.99 以上，对起点模型在 0.47–0.55 之间波动，最后两次评估到 0.55；偏离起点模型的程度（KL）平稳上升，没有失控。
+
+![rl_four_v19 训练曲线](docs/img/curves_rl_four_v19.png)
+
+**强化学习超过老师**：从行为克隆模型（对规则 AI 0.49）出发，第 15 轮就超过老师（0.64），60 轮到 0.86，最高 0.95。
+
+![强化学习超过规则 AI](docs/img/rl_from_bc.png)
+
 ## 快速开始
 
 只需要 g++ 和 numpy 就能编译引擎、跑测试、和规则 AI 下棋；训练和神经网络 AI 需要 PyTorch。
@@ -80,7 +96,7 @@ engine/src/                    board / rules / game（走法、碰子、信念�
 engine/tests/                  C++ 自测（不变量、模糊测试、信念可靠性、确定性）与基准
 junqi/                         Python：engine(ctypes) model train_bc train_rl arena style setup_search play web/
 configs/rules/                 规则配置（四国暗棋、二人）
-scripts/                       构建、自检、分代训练循环
+scripts/                       构建、自检、分代训练循环、画训练曲线
 tests/                         规则回归测试（手写用例 + 自对弈快照）、Python 测试（含泄漏测试）
 desktop/JunqiStudio/           Windows 训练工作台（WPF + .NET 8）
 docs/                          技术报告、规则说明、Windows 手册
